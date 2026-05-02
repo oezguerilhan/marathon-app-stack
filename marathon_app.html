@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>marathon-app — Ozzy 2026/27</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root {
+    --hart:    #ef4444; --hart-l:    #fee2e2;
+    --mod:     #f97316; --mod-l:     #ffedd5;
+    --easy:    #22c55e; --easy-l:    #dcfce7;
+    --rest:    #94a3b8; --rest-l:    #f1f5f9;
+    --frozen:  #7c3aed; --frozen-l:  #ede9fe;
+    --blue:    #3b82f6; --blue-l:    #dbeafe;
+    --text:    #1e293b; --muted:     #64748b;
+    --border:  #e2e8f0; --bg:        #f8fafc;
+    --card:    #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 18px 18px 40px; font-size: 13px; line-height: 1.5; max-width: 1200px; margin: 0 auto; }
+
+  h1 { font-size: 20px; font-weight: 700; }
+  h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 10px; }
+  h3 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+
+  /* Header */
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  header .info { color: var(--muted); font-size: 12px; }
+  header .info strong { color: var(--text); }
+  header .actions { display: flex; gap: 6px; }
+
+  button, input[type="file"]::file-selector-button { font: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--text); padding: 5px 11px; border-radius: 6px; font-size: 12px; }
+  button:hover { background: var(--bg); }
+  button.primary { background: var(--blue); color: white; border-color: var(--blue); }
+  button.primary:hover { background: #2563eb; }
+  button.danger { background: var(--hart); color: white; border-color: var(--hart); }
+
+  /* Tabs */
+  nav.tabs { display: flex; gap: 2px; flex-wrap: wrap; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+  nav.tabs button { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 8px 12px; font-size: 13px; color: var(--muted); border-radius: 0; }
+  nav.tabs button.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+
+  section.tab { display: none; }
+  section.tab.active { display: block; }
+
+  /* Cards */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+  .card .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+  /* Forms */
+  label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+  input, select, textarea { font: inherit; font-size: 13px; padding: 6px 9px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text); width: 100%; }
+  input[type="number"] { width: 100%; }
+  textarea { min-height: 50px; resize: vertical; }
+  .field { margin-bottom: 10px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+  .row .field { flex: 1; min-width: 120px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); font-size: 12px; }
+  th { padding: 7px 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); background: var(--bg); border-bottom: 1px solid var(--border); text-align: left; }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+  .b-hart   { background: var(--hart-l);   color: var(--hart); }
+  .b-mod    { background: var(--mod-l);    color: var(--mod); }
+  .b-easy   { background: var(--easy-l);   color: var(--easy); }
+  .b-rest   { background: var(--rest-l);   color: var(--muted); }
+  .b-frozen { background: var(--frozen-l); color: var(--frozen); }
+  .b-blue   { background: var(--blue-l);   color: var(--blue); }
+
+  /* Banners */
+  .banner { padding: 10px 12px; border-radius: 8px; font-size: 12px; margin-bottom: 10px; }
+  .banner-info  { background: var(--blue-l);   color: #1e40af; border: 1px solid #93c5fd; }
+  .banner-warn  { background: var(--mod-l);    color: #9a3412; border: 1px solid #fdba74; }
+  .banner-ok    { background: var(--easy-l);   color: #166534; border: 1px solid #86efac; }
+
+  /* Day cells in week table */
+  .day-cell { display: flex; flex-direction: column; gap: 3px; }
+  .day-cell .meta { font-size: 11px; color: var(--muted); }
+
+  /* Charts */
+  canvas { display: block; max-width: 100%; height: auto; }
+  .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+  .chart-card .chart-title { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+
+  /* KPI */
+  .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .kpi .kpi-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); font-weight: 600; }
+  .kpi .kpi-value { font-size: 18px; font-weight: 700; margin-top: 2px; }
+  .kpi .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Modal */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+  .modal-bg.show { display: flex; }
+  .modal { background: var(--card); border-radius: 10px; padding: 18px; max-width: 480px; width: 100%; }
+  .modal h3 { margin-bottom: 12px; }
+  .modal .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+
+  /* Rowing block table */
+  .protocol-table th, .protocol-table td { font-size: 12px; }
+  .protocol-table tr.hard td { background: var(--hart-l); }
+  .protocol-table tr.warmup td, .protocol-table tr.cool td { background: var(--blue-l); }
+  .protocol-table tr.rest td { background: var(--rest-l); }
+  .protocol-table tr.total td { background: var(--bg); font-weight: 700; }
+
+  /* Meal cards */
+  .meal-day { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+  .meal-day .md-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .meal-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .meal-slot { background: var(--bg); border-radius: 8px; padding: 8px 10px; font-size: 11px; }
+  .meal-slot .ms-name { font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); margin-bottom: 3px; }
+  .meal-slot .ms-time { font-size: 10px; color: var(--blue); font-weight: 600; }
+  .meal-slot ul { padding-left: 14px; margin-top: 4px; font-size: 11px; }
+  .meal-slot li { margin-bottom: 2px; }
+
+  .empty { color: var(--muted); font-style: italic; padding: 12px; text-align: center; }
+
+  pre { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 12px; line-height: 1.5; overflow-x: auto; white-space: pre-wrap; }
+
+  .hidden { display: none !important; }
+
+  @media print {
+    body { background: white; padding: 0; font-size: 11px; max-width: none; }
+    nav.tabs, header .actions, .no-print { display: none !important; }
+    section.tab { display: block !important; page-break-after: always; }
+    section.tab:last-child { page-break-after: auto; }
+    .card { break-inside: avoid; box-shadow: none; }
+  }
+  @media (max-width: 720px) {
+    .grid-2, .grid-3, .grid-4, .meal-grid { grid-template-columns: 1fr 1fr; }
+    nav.tabs { overflow-x: auto; flex-wrap: nowrap; }
+    nav.tabs button { white-space: nowrap; }
+  }
+  @media (max-width: 480px) {
+    .grid-2, .grid-3, .grid-4, .meal-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>marathon-app</h1>
+    <div class="info" id="header-info">Phase — · Woche ab —</div>
+  </div>
+  <div class="actions no-print">
+    <button id="btn-export-json">Export JSON</button>
+    <button id="btn-import-json">Import JSON</button>
+    <input type="file" id="file-import" accept=".json" hidden>
+  </div>
+</header>
+
+<nav class="tabs no-print">
+  <button class="tab-btn active" data-tab="setup">Setup</button>
+  <button class="tab-btn" data-tab="shifts">Dienstplan</button>
+  <button class="tab-btn" data-tab="week">Wochenplan</button>
+  <button class="tab-btn" data-tab="log">Lauf-Logbook</button>
+  <button class="tab-btn" data-tab="nutrition">Ernährung</button>
+  <button class="tab-btn" data-tab="prep">Mealprep</button>
+  <button class="tab-btn" data-tab="rowing">Rudern</button>
+  <button class="tab-btn" data-tab="data">Daten</button>
+</nav>
+
+<main>
+
+<!-- ========== TAB 1: SETUP ========== -->
+<section class="tab active" id="tab-setup">
+  <div class="card">
+    <h2>Grunddaten</h2>
+    <div class="row">
+      <div class="field">
+        <label>Phase</label>
+        <select id="setup-phase"></select>
+      </div>
+      <div class="field">
+        <label>Wochenstart (Mo)</label>
+        <input type="date" id="setup-week-start">
+      </div>
+      <div class="field">
+        <label>HFmax (bpm)</label>
+        <input type="number" id="setup-hfmax" min="120" max="220" step="1">
+      </div>
+      <div class="field">
+        <label>Gewicht (kg)</label>
+        <input type="number" id="setup-weight" min="40" max="200" step="0.1">
+      </div>
+    </div>
+    <button class="primary" id="setup-save">Speichern</button>
+  </div>
+
+  <div class="card">
+    <h2>Phasen-Übersicht</h2>
+    <table>
+      <thead><tr><th>Phase</th><th>Zeitraum</th><th>Volumen</th><th>Long Run</th><th>Tempo</th></tr></thead>
+      <tbody id="phase-table"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ========== TAB 2: DIENSTPLAN ========== -->
+<section class="tab" id="tab-shifts">
+  <div class="card">
+    <h2>Dienstplan-PDF hochladen</h2>
+    <p class="info" style="font-size:12px;color:var(--muted);margin-bottom:10px;">PDF-Export aus deiner iPhone-Kalender-App. Wird lokal gelesen, kein Upload.</p>
+    <input type="file" id="pdf-input" accept=".pdf">
+    <div id="pdf-status" style="margin-top:10px;font-size:12px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Woche</h2>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="shifts-prev-week">◀ Woche</button>
+        <input type="date" id="shifts-week-start" style="width:160px;">
+        <button id="shifts-next-week">Woche ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Manuell editieren</h2>
+      <button class="primary" id="shifts-save">Speichern + Wochenplan generieren</button>
+    </div>
+    <table>
+      <thead><tr><th>Tag</th><th>Datum</th><th>Schicht</th><th>Notiz</th></tr></thead>
+      <tbody id="shifts-table"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ========== TAB 3: WOCHENPLAN ========== -->
+<section class="tab" id="tab-week">
+  <div id="week-banners"></div>
+  <div class="card">
+    <h2>Wochenplan</h2>
+    <table>
+      <thead><tr><th>Tag</th><th>Datum</th><th>Schicht</th><th>Tagestyp</th><th>Empfehlung</th><th>Mahlzeiten</th></tr></thead>
+      <tbody id="week-table"></tbody>
+    </table>
+  </div>
+  <div class="card no-print">
+    <p style="font-size:12px;color:var(--muted);">Tipp: Klick auf eine Zeile öffnet Override-Dialog (REST/EASY/MOD/HART + Notiz). Cmd+P → druckbar.</p>
+  </div>
+</section>
+
+<!-- ========== TAB 4: LAUF-LOGBOOK ========== -->
+<section class="tab" id="tab-log">
+  <div class="card no-print">
+    <div class="card-head">
+      <h2>Polar TCX Import</h2>
+      <span class="meta" style="font-size:11px;color:var(--muted);">flow.polar.com → Activity → Export Session → TCX</span>
+    </div>
+    <input type="file" id="tcx-input" accept=".tcx,.gpx" multiple>
+    <div id="tcx-status" style="margin-top:10px;font-size:12px;"></div>
+  </div>
+
+  <div class="card no-print">
+    <div class="card-head">
+      <h2>Polar Auto-Sync</h2>
+      <button id="polar-sync-now">↻ Sync jetzt</button>
+    </div>
+    <p class="meta" style="font-size:12px;color:var(--muted);">
+      Letzter Sync: <span id="polar-last-sync">—</span> ·
+      Status: <span id="polar-sync-status">—</span>
+    </p>
+  </div>
+
+  <div class="card no-print">
+    <h2>Lauf eintragen</h2>
+    <form id="log-form">
+      <div class="row">
+        <div class="field"><label>Datum</label><input type="date" name="date" required></div>
+        <div class="field"><label>Typ</label>
+          <select name="type">
+            <option>Locker</option><option>Tempo</option><option>LongRun</option>
+            <option>Tennis</option><option>Padel</option><option>Gym</option><option>Rudern</option>
+          </select>
+        </div>
+        <div class="field"><label>Strecke (km)</label><input type="number" name="km" step="0.1" min="0"></div>
+        <div class="field"><label>Dauer (Min)</label><input type="number" name="durationMin" min="0"></div>
+        <div class="field"><label>Pace mm:ss/km</label><input type="text" name="pace" placeholder="8:26"></div>
+        <div class="field"><label>HF avg</label><input type="number" name="avgHr" min="60" max="220"></div>
+        <div class="field"><label>HF max</label><input type="number" name="maxHr" min="60" max="220"></div>
+        <div class="field"><label>Gefühl 1–10</label><input type="number" name="feeling" min="1" max="10"></div>
+      </div>
+      <div class="field"><label>Notiz</label><textarea name="note" placeholder="z.B. AS 0/10, Wetter, Schuhe ..."></textarea></div>
+      <button class="primary" type="submit">Eintragen</button>
+      <button type="button" id="log-clear">Form leeren</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Letzte Einträge</h2>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="log-show-all" style="font-size:11px;">Alle anzeigen</button>
+        <button id="log-export-csv">CSV Export</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Datum</th><th>Typ</th><th>km</th><th>Pace</th><th>HF</th><th>Gefühl</th><th>Notiz</th><th></th></tr></thead>
+      <tbody id="log-table"></tbody>
+    </table>
+  </div>
+
+  <div class="grid-4">
+    <div class="kpi"><div class="kpi-label">4-Wochen Volumen</div><div class="kpi-value" id="kpi-volume">— km</div><div class="kpi-sub" id="kpi-volume-sub"></div></div>
+    <div class="kpi"><div class="kpi-label">Avg Locker-Pace (Z2)</div><div class="kpi-value" id="kpi-pace">—</div><div class="kpi-sub" id="kpi-pace-sub"></div></div>
+    <div class="kpi"><div class="kpi-label">Längster Long Run</div><div class="kpi-value" id="kpi-long">— km</div><div class="kpi-sub" id="kpi-long-sub"></div></div>
+    <div class="kpi"><div class="kpi-label">AS-Beschwerde-Tage</div><div class="kpi-value" id="kpi-as">0</div><div class="kpi-sub">letzte 4 Wochen</div></div>
+  </div>
+
+  <div class="grid-2" style="margin-top:12px;">
+    <div class="chart-card"><div class="chart-title">Wochenkilometer (12 Wochen)</div><canvas id="chart-volume" width="500" height="180"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Locker-Pace bei HF Z2 (sec/km)</div><canvas id="chart-pace" width="500" height="180"></canvas></div>
+    <div class="chart-card"><div class="chart-title">HF avg Locker-Lauf</div><canvas id="chart-hr" width="500" height="180"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Gefühl (1–10)</div><canvas id="chart-feel" width="500" height="180"></canvas></div>
+  </div>
+</section>
+
+<!-- ========== TAB 5: ERNÄHRUNG ========== -->
+<section class="tab" id="tab-nutrition">
+  <div class="card">
+    <h2>Wochen-Ernährung</h2>
+    <p style="font-size:12px;color:var(--muted);">Pro Tag: 4 Mahlzeit-Slots mit je 3 Varianten zur Wahl. Zeiten passen sich an Schicht an. Ziel: 130–150 g Protein/Tag.</p>
+  </div>
+  <div id="nutrition-days"></div>
+</section>
+
+<!-- ========== TAB 6: MEALPREP ========== -->
+<section class="tab" id="tab-prep">
+  <div class="grid-2">
+    <div class="card">
+      <h2>Einkaufsliste</h2>
+      <div id="prep-shopping"></div>
+    </div>
+    <div class="card">
+      <h2>Vorkoch-Block (So 17:00–17:45)</h2>
+      <ol id="prep-steps" style="padding-left:18px;font-size:13px;line-height:1.7;"></ol>
+      <div id="prep-notes" style="margin-top:10px;font-size:12px;color:var(--muted);"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== TAB 7: RUDERN ========== -->
+<section class="tab" id="tab-rowing">
+  <div class="card">
+    <h2>Setup — Skandika Nemo V (Wasserrudern)</h2>
+    <table>
+      <tr><th>Wasserstufe</th><td><strong>4</strong> (für Z2 auch 3 ok)</td></tr>
+      <tr><th>Steuerung</th><td>HF · 500m-Split · SPM (Züge/Min)</td></tr>
+      <tr><th>Sitzposition</th><td>Knie ~90°, Rücken aufrecht</td></tr>
+      <tr><th>Fußschlaufe</th><td>locker (Ferse darf abheben → AS-Schutz)</td></tr>
+      <tr><th>Zugfolge</th><td>Beine → Rücken → Arme (1-2-3, kein Fersen-Stoß)</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>HF-/SPM-Zonen <span class="badge b-blue" style="font-weight:500;font-size:10px;">basierend auf HFmax <span id="rowing-hfmax">182</span> bpm</span></h2>
+    <table>
+      <thead><tr><th>Zone</th><th>bpm</th><th>SPM</th><th>Gefühl</th></tr></thead>
+      <tbody id="rowing-zones"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2 id="rowing-protocol-title">Protokoll —</h2>
+    <p id="rowing-protocol-meta" style="font-size:12px;color:var(--muted);margin-bottom:10px;"></p>
+    <table class="protocol-table">
+      <thead><tr><th>Block</th><th>Dauer</th><th>Intensität</th><th>HF-Ziel</th></tr></thead>
+      <tbody id="rowing-blocks"></tbody>
+    </table>
+    <div id="rowing-hint" class="banner banner-info" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="banner banner-warn" style="margin-bottom:0;">
+      <strong>AS-Schutz beim Rudern:</strong> Fußschlaufe locker · Kein Explosiv-Start aus Kompression · Bei AS-Schmerz &gt;1/10 sofort runter · Bei Unsicherheit Technik-Video oder Trainer fragen vor erstem hartem Protokoll.
+    </div>
+  </div>
+</section>
+
+<!-- ========== TAB 8: DATEN ========== -->
+<section class="tab" id="tab-data">
+  <div class="card">
+    <h2>Daten verwalten</h2>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Alles wird lokal im Browser gespeichert (LocalStorage). Export für Backup oder Transfer auf anderen Mac/iPhone.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="primary" id="data-export">Export JSON-Backup</button>
+      <button id="data-import">Import JSON</button>
+      <button class="danger" id="data-reset">Reset (alles löschen)</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>State-Inhalt (Vorschau)</h2>
+    <pre id="data-preview"></pre>
+  </div>
+</section>
+
+</main>
+
+<!-- Override modal -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <h3>Tag überschreiben</h3>
+    <div class="field"><label>Datum</label><input type="text" id="modal-date" disabled></div>
+    <div class="field"><label>Tagestyp</label>
+      <select id="modal-type">
+        <option value="">— Standard (Generator) —</option>
+        <option>REST</option><option>EASY</option><option>MODERATE</option><option>HART</option>
+      </select>
+    </div>
+    <div class="field"><label>Notiz</label><textarea id="modal-note"></textarea></div>
+    <div class="modal-actions">
+      <button id="modal-cancel">Abbrechen</button>
+      <button class="primary" id="modal-save">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ============================================================
+// KONSTANTEN
+// ============================================================
+
+const SHIFT_TYPES = ['frei', 'Frueh', 'Tag', 'Spaet', 'Nacht', 'Bereitschaft', 'BTSBereitschaft'];
+const SHIFT_LABELS = {
+  frei: 'frei',
+  Frueh: 'Früh 06–13',
+  Tag: 'Tag 13–21',
+  Spaet: 'Spät 13–20',
+  Nacht: 'Nacht 20–06',
+  Bereitschaft: 'Bereitschaft 09–17',
+  BTSBereitschaft: 'BTS Bereitschaft 13–21'
+};
+const DAY_NAMES = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
+const PHASES = [
+  { id: 0, name: 'Phase 0 — Recovery',         range: '28.04 – 10.05.2026', volumeKm: 5,  longKm: 0,  tempo: false, taper: true },
+  { id: 1, name: 'Phase 1 — Reverse Taper',    range: '11.05 – 31.05.2026', volumeKm: 15, longKm: 6,  tempo: false, taper: false },
+  { id: 2, name: 'Phase 2 — Base Building',    range: 'Jun – Sep 2026',     volumeKm: 23, longKm: 12, tempo: false, taper: false },
+  { id: 3, name: 'Phase 3 — Strength',         range: 'Sep – Dez 2026',     volumeKm: 30, longKm: 16, tempo: true,  taper: false },
+  { id: 4, name: 'Phase 4 — Mid-Test',         range: 'Dez 2026 / Jan 2027',volumeKm: 25, longKm: 15, tempo: true,  taper: false },
+  { id: 5, name: 'Phase 5 — Peak',             range: 'Jan – Feb 2027',     volumeKm: 38, longKm: 19, tempo: true,  taper: false },
+  { id: 6, name: 'Phase 6 — Tune-Up',          range: 'Feb – März 2027',    volumeKm: 30, longKm: 16, tempo: true,  taper: false },
+  { id: 7, name: 'Phase 7 — Taper / Race',     range: '28.03 – 18.04.2027', volumeKm: 18, longKm: 10, tempo: true,  taper: true }
+];
+
+// Pace baselines in sec/km — aus halbmarathon_2027_roadmap.md
+const BASELINE_PACES = {
+  0: { locker: [540, 570], long: null,        tempo: null },
+  1: { locker: [510, 540], long: [525, 555],  tempo: null },
+  2: { locker: [495, 525], long: [510, 540],  tempo: null },
+  3: { locker: [480, 510], long: [495, 525],  tempo: [330, 360] },
+  4: { locker: [470, 500], long: [490, 520],  tempo: [330, 360] },
+  5: { locker: [450, 480], long: [475, 505],  tempo: [320, 350] },
+  6: { locker: [445, 475], long: [470, 500],  tempo: [320, 350] },
+  7: { locker: [450, 480], long: [475, 505],  tempo: [320, 350] }
+};
+
+// Long-Run-Distanz pro Phase (km, ~ Mittelwert) — aus Roadmap
+const LONG_RUN_KM = { 0: 0, 1: 6, 2: 12, 3: 16, 4: 15, 5: 19, 6: 16, 7: 10 };
+const LOCKER_KM   = { 0: 4, 1: 5, 2: 5, 3: 5, 4: 5, 5: 5, 6: 5, 7: 4 };
+const TEMPO_KM    = { 0: 0, 1: 0, 2: 0, 3: 6, 4: 6, 5: 7, 6: 6, 7: 5 };
+
+// Mahlzeiten-Zeiten pro Schicht — aus schichtdienst_anpassung_HM.md
+const MEAL_TIMES = {
+  frei:   { breakfast: '07:30', lunch: '12:30', preTrain: 'vor Lauf', dinner: '19:00' },
+  Frueh:  { breakfast: '04:30', lunch: '13:30', preTrain: '14:30',    dinner: '19:00' },
+  Tag:    { breakfast: '07:00', lunch: '12:00', preTrain: 'morgens',  dinner: '22:30' },
+  Spaet:  { breakfast: '07:00', lunch: '11:00', preTrain: 'morgens',  dinner: '21:00' },
+  Nacht:  { breakfast: '06:30', lunch: '14:00', preTrain: '—',        dinner: '18:30' },
+  Bereitschaft:    { breakfast: '07:00', lunch: '12:30', preTrain: 'abends nach 17', dinner: '19:30' },
+  BTSBereitschaft: { breakfast: '07:00', lunch: '11:30', preTrain: 'morgens',        dinner: '22:00' }
+};
+
+// 5-Regeln-Mahlzeiten — 3 Varianten pro Slot
+const MEAL_VARIANTS = {
+  breakfast: [
+    { name: '3 Eier + Vollkornbrot', kcal: 600, p: 30 },
+    { name: 'Haferflocken 80 g + Skyr 200 g + Banane', kcal: 680, p: 35 },
+    { name: 'Rührei + Magerquark 200 g + Beeren', kcal: 550, p: 40 }
+  ],
+  lunch: [
+    { name: 'Hähnchen 180 g + Reis 250 g + Gemüse', kcal: 700, p: 50 },
+    { name: 'Pute 200 g + Vollkornpasta 250 g + Tomatensauce', kcal: 750, p: 55 },
+    { name: 'Skyr-Bowl + Kantine (wenn unterwegs)', kcal: 500, p: 30 }
+  ],
+  postTrain: [
+    { name: 'Quark 250 g + Beeren', kcal: 280, p: 35 },
+    { name: 'Whey-Shake 30 g + Banane + Milch', kcal: 280, p: 30 },
+    { name: 'Skyr 250 g + Honig', kcal: 240, p: 30 }
+  ],
+  dinner: [
+    { name: 'Lachs 150 g + Süßkartoffel 200 g + Salat', kcal: 700, p: 35 },
+    { name: 'Rinderhack 200 g + Kartoffeln + Gemüse', kcal: 750, p: 50 },
+    { name: 'Hähnchenbrust 180 g + Reis + Brokkoli', kcal: 680, p: 50 }
+  ]
+};
+
+// kcal-Targets pro Tagestyp
+const KCAL_BY_TYPE = { HART: 3500, MODERATE: 3250, EASY: 3100, REST: 2900 };
+
+// Ruder-Protokolle nach Phase
+const ROWING_PROTOCOLS = {
+  A: {
+    name: 'Protokoll A — Zone 2 Steady State',
+    meta: 'SPM 18–22 · Wasserstufe 3–4 · 25–30 Min',
+    blocks: [
+      { name: 'Einfahren', dur: '5 Min', intensity: 'locker',           hr: '< 125 bpm',  cls: 'warmup' },
+      { name: 'Hauptblock', dur: '15–20 Min', intensity: 'gleichmäßig Z2', hr: '125–145 bpm', cls: '' },
+      { name: 'Ausfahren', dur: '5 Min',  intensity: 'sehr locker',     hr: '< 120 bpm',  cls: 'cool' },
+      { name: 'Gesamt',    dur: '25–30 Min', intensity: '', hr: '', cls: 'total' }
+    ],
+    hint: 'Erste Einheit: 500m-Split bei HF ~135 bpm notieren → persönlicher Z2-Benchmark.'
+  },
+  B: {
+    name: 'Protokoll B — 4×4 Intervalle (norwegisch)',
+    meta: 'SPM 24–26 · Wasserstufe 4 · ~38 Min',
+    blocks: [
+      { name: 'Warm-up',     dur: '8 Min', intensity: 'aufbauend',  hr: 'bis 145 bpm',  cls: 'warmup' },
+      { name: 'Intervall 1', dur: '4 Min', intensity: 'hart Z4',    hr: '155–168 bpm',  cls: 'hard' },
+      { name: 'Pause 1',     dur: '3 Min', intensity: 'sehr locker',hr: '< 130 bpm',    cls: 'rest' },
+      { name: 'Intervall 2', dur: '4 Min', intensity: 'hart',       hr: '155–168 bpm',  cls: 'hard' },
+      { name: 'Pause 2',     dur: '3 Min', intensity: 'sehr locker',hr: '< 130 bpm',    cls: 'rest' },
+      { name: 'Intervall 3', dur: '4 Min', intensity: 'hart',       hr: '155–168 bpm',  cls: 'hard' },
+      { name: 'Pause 3',     dur: '3 Min', intensity: 'sehr locker',hr: '< 130 bpm',    cls: 'rest' },
+      { name: 'Intervall 4', dur: '4 Min', intensity: 'hart',       hr: '155–168 bpm',  cls: 'hard' },
+      { name: 'Cool-down',   dur: '5 Min', intensity: 'locker',     hr: '< 125 bpm',    cls: 'cool' },
+      { name: 'Gesamt',      dur: '~38 Min', intensity: '', hr: '', cls: 'total' }
+    ],
+    hint: '500m-Split in Intervall 1 notieren → Runden 2–4 gleichen Split halten (nicht schneller!).'
+  },
+  C1: {
+    name: 'Protokoll C1 — Pyramide 1-2-3-3-2-1',
+    meta: 'SPM 26–30 · Wasserstufe 4 · ~33 Min',
+    blocks: [
+      { name: 'Warm-up',     dur: '8 Min', intensity: 'aufbauend',  hr: 'bis 150 bpm',  cls: 'warmup' },
+      { name: '1 Min hart',  dur: '1 Min', intensity: 'sehr hart Z5',hr: '168–175 bpm', cls: 'hard' },
+      { name: '1 Min Pause', dur: '1 Min', intensity: 'locker',     hr: '< 135 bpm',    cls: 'rest' },
+      { name: '2 Min hart',  dur: '2 Min', intensity: 'sehr hart',  hr: '168–175 bpm',  cls: 'hard' },
+      { name: '2 Min Pause', dur: '2 Min', intensity: 'locker',     hr: '< 135 bpm',    cls: 'rest' },
+      { name: '3 Min hart',  dur: '3 Min', intensity: 'sehr hart',  hr: '168–175 bpm',  cls: 'hard' },
+      { name: '3 Min Pause', dur: '3 Min', intensity: 'locker',     hr: '< 135 bpm',    cls: 'rest' },
+      { name: '3 Min hart',  dur: '3 Min', intensity: 'sehr hart',  hr: '168–175 bpm',  cls: 'hard' },
+      { name: '3 Min Pause', dur: '3 Min', intensity: 'locker',     hr: '< 135 bpm',    cls: 'rest' },
+      { name: '2 Min hart',  dur: '2 Min', intensity: 'sehr hart',  hr: '168–175 bpm',  cls: 'hard' },
+      { name: '2 Min Pause', dur: '2 Min', intensity: 'locker',     hr: '< 135 bpm',    cls: 'rest' },
+      { name: '1 Min hart',  dur: '1 Min', intensity: 'maximal',    hr: '175+ bpm',     cls: 'hard' },
+      { name: 'Cool-down',   dur: '5 Min', intensity: 'locker',     hr: '< 125 bpm',    cls: 'cool' },
+      { name: 'Gesamt',      dur: '~33 Min', intensity: '', hr: '', cls: 'total' }
+    ],
+    hint: 'Atemrhythmus konstant halten — bei Z5 nicht aus Atem fallen.'
+  },
+  C2: {
+    name: 'Protokoll C2 — 30/30s (Kurzversion)',
+    meta: 'SPM hart 28–30, locker 18 · Wasserstufe 4 · ~25 Min',
+    blocks: [
+      { name: 'Warm-up',                dur: '8 Min',  intensity: 'aufbauend',         hr: 'bis 145 bpm',           cls: 'warmup' },
+      { name: '12× (30s hart / 30s locker)', dur: '12 Min', intensity: 'Z5 / Z2 Wechsel', hr: '168–178 / < 130 bpm', cls: 'hard' },
+      { name: 'Cool-down',              dur: '5 Min',  intensity: 'locker',            hr: '< 125 bpm',             cls: 'cool' },
+      { name: 'Gesamt',                 dur: '~25 Min', intensity: '', hr: '', cls: 'total' }
+    ],
+    hint: 'Erste 3–4 Runden fühlen sich leicht an — VO2-Max-Stimulus kommt ab Runde 6–8. Durchhalten.'
+  }
+};
+
+// Phase → Protokoll-Mapping
+const PHASE_PROTOCOL = { 0: 'A', 1: 'A', 2: 'B', 3: 'C1', 4: 'B', 5: 'C2', 6: 'B', 7: 'A' };
+
+// HF-Zonen (% von HFmax)
+const HR_ZONES = [
+  { name: 'Z2 Aerobic Base',  pct: [0.65, 0.80], spm: '18–22', feeling: 'Unterhaltung möglich' },
+  { name: 'Z3 Aerobic Power', pct: [0.80, 0.85], spm: '22–24', feeling: 'Sätze noch möglich' },
+  { name: 'Z4 Threshold',     pct: [0.85, 0.92], spm: '24–26', feeling: 'Sprechen schwer' },
+  { name: 'Z5 VO2 Max',       pct: [0.92, 0.98], spm: '26–30', feeling: 'Nur kurze Sätze' }
+];
+
+// ============================================================
+// STATE
+// ============================================================
+
+const STORAGE_KEY = 'hm_app_state_v1';
+
+function defaultState() {
+  const today = new Date();
+  const day = today.getDay();
+  const diff = day === 0 ? -6 : 1 - day; // Snap auf Montag
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diff);
+  const mondayIso = isoDate(monday);
+  const shifts = {};
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(mondayIso, i);
+    shifts[d] = { type: 'frei', note: '' };
+  }
+  return {
+    version: 1,
+    user: { hfMax: 182, weight: 83 },
+    phase: 0,
+    weekStart: mondayIso,
+    shifts,
+    overrides: {},
+    weighIns: [],
+    runs: []
+  };
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultState();
+    const s = JSON.parse(raw);
+    if (s.version !== 1) return defaultState();
+    return s;
+  } catch (e) {
+    console.error('State load error', e);
+    return defaultState();
+  }
+}
+
+function saveState(s) {
+  state = s;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+}
+
+let state = loadState();
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function isoDate(d) {
+  if (typeof d === 'string') return d.slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function addDays(iso, n) {
+  const d = new Date(iso + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return isoDate(d);
+}
+
+function formatDateShort(iso) {
+  const [y, m, d] = iso.split('-');
+  return `${d}.${m}.`;
+}
+
+function dayName(iso) {
+  const d = new Date(iso + 'T12:00:00');
+  let i = d.getDay() - 1;
+  if (i < 0) i = 6;
+  return DAY_NAMES[i];
+}
+
+function paceFromSec(sec) {
+  if (sec == null || isNaN(sec)) return '—';
+  const m = Math.floor(sec / 60);
+  const s = Math.round(sec % 60);
+  return `${m}:${String(s).padStart(2, '0')}/km`;
+}
+
+function paceFromInput(str) {
+  if (!str) return null;
+  const m = String(str).match(/^(\d+):(\d{1,2})$/);
+  if (!m) return null;
+  return parseInt(m[1]) * 60 + parseInt(m[2]);
+}
+
+function paceRangeStr(range) {
+  if (!range) return '—';
+  return `${paceFromSec(range[0]).replace('/km','')}–${paceFromSec(range[1])}`;
+}
+
+function getWeekDates() {
+  return Array.from({length: 7}, (_, i) => addDays(state.weekStart, i));
+}
+
+// ============================================================
+// PDF PARSER
+// ============================================================
+
+async function parseDienstplanPdf(file) {
+  if (!window.pdfjsLib) throw new Error('PDF.js nicht geladen');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  // Flat text join — robust against column Y-offset variations in Supershift PDF
+  let allText = '';
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const tc = await page.getTextContent();
+    allText += tc.items.map(it => it.str).join(' ') + ' ';
+  }
+  return extractShiftsFromText(allText);
+}
+
+function extractShiftsFromText(text) {
+  const result = {};
+  const dayAbbr = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+
+  // Detect all months in PDF (e.g. "März 2026", "Mai 2026")
+  const monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli',
+                      'August','September','Oktober','November','Dezember'];
+  const monthRegex = new RegExp(`(${monthNames.join('|')})\\s+(\\d{4})`, 'g');
+  const months = [];
+  let mm;
+  while ((mm = monthRegex.exec(text)) !== null) {
+    months.push({ month: monthNames.indexOf(mm[1]) + 1, year: parseInt(mm[2]) });
+  }
+  if (months.length === 0) return result;
+
+  // Build all candidate ISO dates for detected months
+  const candidates = [];
+  for (const { month, year } of months) {
+    const days = new Date(year, month, 0).getDate();
+    for (let day = 1; day <= days; day++) {
+      candidates.push(`${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`);
+    }
+  }
+
+  // Supershift iOS codes + fallback legacy codes
+  const codeMap = {
+    'a': 'Frueh', 'Frühschicht': 'Frueh', 'Früh': 'Frueh',
+    'c': 'Spaet', 'Spätschicht': 'Spaet', 'Spät': 'Spaet',
+    'd': 'Nacht', 'Nachtschicht': 'Nacht',
+    'f': 'Bereitschaft', 'Bereitschaft': 'Bereitschaft',
+    'BT': 'BTSBereitschaft', 'BTS': 'BTSBereitschaft',
+    'TS': 'Tag',
+    'F': 'Frueh', 'T': 'Tag', 'S': 'Spaet', 'N': 'Nacht',
+    'frei': 'frei', 'Frei': 'frei'
+  };
+  const sortedCodes = Object.keys(codeMap).sort((a, b) => b.length - a.length);
+  const nextDayPat = /\b\d{1,2}\s+(?:So|Mo|Di|Mi|Do|Fr|Sa)\b/;
+
+  for (const iso of candidates) {
+    const d = new Date(iso + 'T12:00:00');
+    const num = d.getDate();
+    const wd  = dayAbbr[d.getDay()];
+
+    const pat = new RegExp(`\\b${num}\\s+${wd}\\b`);
+    const m = pat.exec(text);
+    if (!m) continue;
+
+    const after = text.slice(m.index + m[0].length, m.index + m[0].length + 100);
+    const boundary = nextDayPat.exec(after);
+    const segment = (boundary ? after.slice(0, boundary.index) : after).replace(/\s+/g, ' ').trim();
+
+    if (!segment) {
+      result[iso] = { type: 'frei', note: 'Frei', _auto: true };
+      continue;
+    }
+
+    let found = null;
+    for (const code of sortedCodes) {
+      if (segment === code || segment.startsWith(code + ' ')) {
+        found = codeMap[code];
+        break;
+      }
+    }
+
+    if (!found) {
+      const tm = /\b(\d{1,2})[:\s]00\s*[-–]/.exec(segment);
+      if (tm) {
+        const h = parseInt(tm[1]);
+        if (h >= 5 && h <= 9)        found = 'Frueh';
+        else if (h >= 12 && h <= 14) found = 'Spaet';
+        else if (h >= 18)            found = 'Nacht';
+        else                         found = 'Tag';
+      }
+    }
+
+    if (found) result[iso] = { type: found, note: segment.slice(0, 40), _auto: true };
+    else       result[iso] = { type: 'frei', note: 'Frei', _auto: true };
+  }
+  return result;
+}
+
+// ============================================================
+// TCX / GPX PARSER (Polar Flow exports)
+// ============================================================
+
+async function parseTcx(file) {
+  const text = await file.text();
+  const doc = new DOMParser().parseFromString(text, 'text/xml');
+  if (doc.querySelector('parsererror')) throw new Error('TCX nicht parsebar');
+
+  const activity = doc.querySelector('Activity');
+  if (!activity) throw new Error('Keine Activity in TCX');
+
+  const id = activity.querySelector('Id')?.textContent?.trim() || '';
+  const sport = activity.getAttribute('Sport') || '';
+  const laps = [...activity.querySelectorAll('Lap')];
+
+  const startTime = activity.querySelector('Id')?.textContent?.trim()
+                    || laps[0]?.getAttribute('StartTime')
+                    || '';
+
+  // Sum across all laps
+  const totalSec = laps.reduce((a, l) =>
+    a + parseFloat(l.querySelector('TotalTimeSeconds')?.textContent || 0), 0);
+  const totalMeters = laps.reduce((a, l) =>
+    a + parseFloat(l.querySelector('DistanceMeters')?.textContent || 0), 0);
+
+  // HR from all trackpoints
+  const trackpoints = [...activity.querySelectorAll('Trackpoint')];
+  const hrs = trackpoints
+    .map(tp => parseFloat(tp.querySelector('HeartRateBpm > Value')?.textContent || 0))
+    .filter(h => h > 0);
+  const avgHr = hrs.length ? Math.round(hrs.reduce((a,b)=>a+b,0) / hrs.length) : null;
+  const maxHr = hrs.length ? Math.max(...hrs) : null;
+
+  const km = totalMeters / 1000;
+  const durationMin = totalSec / 60;
+  const paceSecPerKm = km > 0.05 ? Math.round(totalSec / km) : null;
+
+  // Type guess from sport attribute
+  let type = 'Locker';
+  if (/biking|cycling/i.test(sport)) type = 'Rudern'; // closest in app schema
+  if (sport === 'Other' || sport === '') type = 'Locker';
+
+  const polarId = id || null;
+  return {
+    id: polarId || crypto.randomUUID(),
+    date: startTime ? startTime.slice(0, 10) : isoDate(new Date()),
+    type,
+    km: Math.round(km * 10) / 10,
+    durationMin: Math.round(durationMin * 10) / 10,
+    paceSecPerKm,
+    avgHr,
+    maxHr,
+    feeling: null,
+    note: 'Polar TCX',
+    polarId
+  };
+}
+
+async function parseGpx(file) {
+  const text = await file.text();
+  const doc = new DOMParser().parseFromString(text, 'text/xml');
+  if (doc.querySelector('parsererror')) throw new Error('GPX nicht parsebar');
+
+  const trkpts = [...doc.querySelectorAll('trkpt')];
+  if (trkpts.length < 2) throw new Error('Zu wenig Trackpoints');
+
+  const firstTime = trkpts[0].querySelector('time')?.textContent;
+  const lastTime  = trkpts[trkpts.length - 1].querySelector('time')?.textContent;
+  if (!firstTime || !lastTime) throw new Error('GPX ohne Zeitstempel');
+
+  const totalSec = (new Date(lastTime) - new Date(firstTime)) / 1000;
+
+  // Haversine sum across consecutive trackpoints
+  const R = 6371000;
+  const toRad = d => d * Math.PI / 180;
+  let totalMeters = 0;
+  for (let i = 1; i < trkpts.length; i++) {
+    const lat1 = parseFloat(trkpts[i-1].getAttribute('lat'));
+    const lon1 = parseFloat(trkpts[i-1].getAttribute('lon'));
+    const lat2 = parseFloat(trkpts[i].getAttribute('lat'));
+    const lon2 = parseFloat(trkpts[i].getAttribute('lon'));
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+    totalMeters += R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  // HR from <extensions><gpxtpx:hr>
+  const hrs = trkpts
+    .map(tp => parseFloat(tp.querySelector('hr, *|hr')?.textContent || 0))
+    .filter(h => h > 0);
+  const avgHr = hrs.length ? Math.round(hrs.reduce((a,b)=>a+b,0) / hrs.length) : null;
+  const maxHr = hrs.length ? Math.max(...hrs) : null;
+
+  const km = totalMeters / 1000;
+  const durationMin = totalSec / 60;
+  const paceSecPerKm = km > 0.05 ? Math.round(totalSec / km) : null;
+
+  return {
+    id: crypto.randomUUID(),
+    date: firstTime.slice(0, 10),
+    type: 'Locker',
+    km: Math.round(km * 10) / 10,
+    durationMin: Math.round(durationMin * 10) / 10,
+    paceSecPerKm,
+    avgHr,
+    maxHr,
+    feeling: null,
+    note: 'Polar GPX',
+    polarId: null
+  };
+}
+
+// ============================================================
+// BACKEND SYNC (Single-Source-of-Truth)
+// ============================================================
+
+const POLAR_API_BASE = '/api';  // relative — funktioniert hinter NPM
+const POLAR_LAST_SYNC_KEY = 'hm_polar_last_sync';
+
+async function pushRunsToBackend(runs) {
+  if (!runs || runs.length === 0) return;
+  try {
+    await fetch(POLAR_API_BASE + '/runs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(runs),
+      signal: AbortSignal.timeout(5000)
+    });
+  } catch (e) { /* offline — silent */ }
+}
+
+async function deleteRunFromBackend(runId) {
+  if (!runId) return;
+  try {
+    await fetch(POLAR_API_BASE + '/runs/' + encodeURIComponent(runId), {
+      method: 'DELETE',
+      signal: AbortSignal.timeout(5000)
+    });
+  } catch (e) { /* offline — silent */ }
+}
+
+async function fetchAllRuns(showStatus) {
+  const statusEl = document.getElementById('polar-sync-status');
+  const lastEl   = document.getElementById('polar-last-sync');
+  if (showStatus && statusEl) statusEl.textContent = 'wird geladen...';
+
+  try {
+    const res = await fetch(POLAR_API_BASE + '/runs', {
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const backendRuns = await res.json();
+
+    state.runs = state.runs || [];
+    const existingIds = new Set(state.runs.filter(r => r.id).map(r => r.id));
+
+    let added = 0;
+    for (const run of backendRuns) {
+      if (!run.id) continue;
+      if (existingIds.has(run.id)) continue;
+      state.runs.push(run);
+      existingIds.add(run.id);
+      added++;
+    }
+    saveState(state);
+    const now = new Date();
+    localStorage.setItem(POLAR_LAST_SYNC_KEY, now.toISOString());
+    if (lastEl) lastEl.textContent = now.toLocaleString('de-DE');
+    if (statusEl) statusEl.textContent = added > 0 ? `${added} neue Läufe` : 'aktuell';
+    return added;
+  } catch (e) {
+    if (statusEl) statusEl.textContent = 'offline / Backend nicht erreichbar';
+    return 0;
+  }
+}
+
+async function triggerPolarSyncNow() {
+  const statusEl = document.getElementById('polar-sync-status');
+  if (statusEl) statusEl.textContent = 'Backend pollt Polar...';
+  try {
+    const res = await fetch(POLAR_API_BASE + '/sync-now', {
+      method: 'POST',
+      signal: AbortSignal.timeout(30000)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+  } catch (e) {
+    if (statusEl) statusEl.textContent = 'Backend-Fehler: ' + e.message;
+    return;
+  }
+  // Nach erzwungenem Pull die runs neu laden
+  await fetchAllRuns(true);
+  renderLogbook();
+}
+
+function updatePolarSyncDisplay() {
+  const lastEl = document.getElementById('polar-last-sync');
+  if (!lastEl) return;
+  const last = localStorage.getItem(POLAR_LAST_SYNC_KEY);
+  lastEl.textContent = last ? new Date(last).toLocaleString('de-DE') : 'noch nie';
+}
+
+// ============================================================
+// GENERATOR
+// ============================================================
+
+function generateWeek(s) {
+  const dates = getWeekDates();
+  const phase = PHASES[s.phase];
+  const days = dates.map(d => ({
+    date: d,
+    dayName: dayName(d),
+    shift: (s.shifts[d] && s.shifts[d].type) || 'frei',
+    shiftNote: (s.shifts[d] && s.shifts[d].note) || '',
+    type: null,
+    activity: null,
+    advice: '',
+    paceAdvice: ''
+  }));
+
+  // Schritt 1: Klassifikation pro Tag
+  for (let i = 0; i < 7; i++) {
+    const d = days[i];
+    const shift = d.shift;
+
+    // FROZEN: Mo immer EASY/REST (Post-Gym)
+    if (i === 0) {
+      d.type = 'EASY';
+      d.activity = 'Recovery';
+      d.advice = 'Spaziergang oder lockerer Lauf 3–4 km · Mobility · Post-Gym-Regeneration';
+      continue;
+    }
+
+    // FROZEN: Tag direkt nach Nacht → REST
+    const prevShift = i > 0 ? days[i-1].shift : 'frei';
+    if (prevShift === 'Nacht') {
+      d.type = 'REST';
+      d.activity = 'Recovery';
+      d.advice = 'Schlafen, Spaziergang. Kein Lauf nach Nachtschicht (FROZEN, 36h-Regel).';
+      continue;
+    }
+
+    // Während Nacht-Schicht-Tag
+    if (shift === 'Nacht') {
+      d.type = 'REST';
+      d.activity = 'Schicht';
+      d.advice = 'Spaziergang vor Schicht (30 Min). Pre-Schicht-Mahlzeit 18:30.';
+      continue;
+    }
+
+    // Mi → Tennis (wenn Schicht erlaubt: Frueh/frei/Spaet/Bereitschaft)
+    if (d.dayName === 'Mi') {
+      if (shift === 'Frueh' || shift === 'frei' || shift === 'Spaet' || shift === 'Bereitschaft') {
+        d.type = 'MODERATE';
+        d.activity = 'Tennis';
+        d.advice = 'Tennis 18:00–19:30 · Pre-Match-Aktivierung 8–10 Min (AS-Schutz) · Post-Match Whey + Milch';
+      } else if (shift === 'Tag' || shift === 'BTSBereitschaft') {
+        d.type = 'EASY';
+        d.activity = 'Tennis fällt aus';
+        d.advice = 'Schicht bis 21 → Tennis nicht möglich. Locker-Lauf morgens vor Schicht möglich.';
+      }
+      continue;
+    }
+
+    // So → Gym + Rudern (HART, immer)
+    if (d.dayName === 'So') {
+      d.type = 'HART';
+      d.activity = 'Gym + Rudern';
+      const proto = ROWING_PROTOCOLS[PHASE_PROTOCOL[s.phase]];
+      d.advice = `Gym-Zirkel 30–40 Min + ${proto.name} (${proto.meta})`;
+      continue;
+    }
+  }
+
+  // Schritt 2: Lauf-Slots auf restliche Tage verteilen
+  const longKm = LONG_RUN_KM[s.phase];
+  const tempoKm = TEMPO_KM[s.phase];
+  const lockerKm = LOCKER_KM[s.phase];
+
+  // Long Run: Sa bevorzugt, Do als Alternative
+  const longCandidates = [5, 3]; // Sa=5, Do=3
+  let longIdx = -1;
+  if (longKm > 0) {
+    for (const i of longCandidates) {
+      if (days[i].type !== null) continue;
+      const shift = days[i].shift;
+      // Long Run morgens: frei oder Sa-Spaet/Frueh/Nacht (Vormittag frei)
+      // Bereitschaft (09–17) und BTSBereitschaft (13–21) blockieren Vormittag
+      if (shift === 'frei' || (i === 5 && shift !== 'Tag' && shift !== 'BTSBereitschaft' && shift !== 'Bereitschaft')) {
+        if (longKm > 12 && (shift === 'Tag' || shift === 'BTSBereitschaft')) continue;
+        longIdx = i;
+        break;
+      }
+    }
+    if (longIdx >= 0) {
+      const d = days[longIdx];
+      d.type = 'HART';
+      d.activity = 'Long Run';
+      const range = BASELINE_PACES[s.phase].long;
+      d.advice = `Long Run ${longKm} km · ${d.dayName} morgens · Zone 2 ${paceRangeStr(range)}`;
+      d.paceAdvice = applyPaceFeedback('long', s, range);
+    }
+  }
+
+  // Tempo: Di/Sa abends/morgens, nicht direkt vor/nach Long Run
+  const tempoCandidates = [1, 5, 3]; // Di, Sa, Do
+  let tempoIdx = -1;
+  if (tempoKm > 0 && phase.tempo) {
+    for (const i of tempoCandidates) {
+      if (days[i].type !== null) continue;
+      // Nicht direkt vor/nach Long Run
+      if (longIdx >= 0 && (Math.abs(i - longIdx) === 1)) continue;
+      // Frueh + Tempo abends ok; Tag/BTSBereitschaft bis 21 → kein Tempo abends
+      if (days[i].shift === 'Tag' || days[i].shift === 'BTSBereitschaft') continue;
+      tempoIdx = i;
+      break;
+    }
+    if (tempoIdx >= 0) {
+      const d = days[tempoIdx];
+      d.type = 'HART';
+      d.activity = 'Tempo / Fartlek';
+      const range = BASELINE_PACES[s.phase].tempo;
+      d.advice = `Tempo ${tempoKm} km · ${d.dayName} abends · 4–6× 60–90 s Bursts ${range ? paceRangeStr(range) : '5:30–6:00/km'} · vollst. Pause`;
+      d.paceAdvice = applyPaceFeedback('tempo', s, range);
+    }
+  }
+
+  // Locker: erster verbleibender Slot
+  let lockerIdx = -1;
+  for (let i = 1; i < 7; i++) {
+    if (days[i].type === null) {
+      const shift = days[i].shift;
+      if (shift === 'Nacht') continue;
+      lockerIdx = i;
+      break;
+    }
+  }
+  if (lockerIdx >= 0) {
+    const d = days[lockerIdx];
+    d.type = 'EASY';
+    d.activity = 'Locker-Lauf';
+    const range = BASELINE_PACES[s.phase].locker;
+    const fb = applyPaceFeedback('locker', s, range);
+    d.advice = `Locker ${lockerKm} km · Zone 2 · ${paceRangeStr(range)}`;
+    d.paceAdvice = fb;
+  }
+
+  // Rest: alles übrige = REST
+  for (let i = 0; i < 7; i++) {
+    if (days[i].type === null) {
+      days[i].type = 'REST';
+      days[i].activity = 'Pause';
+      days[i].advice = 'Ruhetag oder Spaziergang · Mobility 10 Min';
+    }
+  }
+
+  // Schritt 3: FROZEN-Check (max 1 HART in Folge)
+  const warnings = [];
+  for (let i = 1; i < 7; i++) {
+    if (days[i].type === 'HART' && days[i-1].type === 'HART') {
+      warnings.push(`${days[i].dayName} ${formatDateShort(days[i].date)}: 2× HART in Folge — auf MODERATE reduziert`);
+      days[i].type = 'MODERATE';
+      days[i].advice = '↓ Reduziert (FROZEN: max 1 HART in Folge). ' + days[i].advice;
+    }
+  }
+
+  // Schritt 4: Overrides
+  for (const [date, override] of Object.entries(s.overrides || {})) {
+    const d = days.find(x => x.date === date);
+    if (d) {
+      if (override.dayType) d.type = override.dayType;
+      if (override.note) d.advice = `[Override] ${override.note}` + (d.advice ? ` · ${d.advice}` : '');
+    }
+  }
+
+  return { days, warnings };
+}
+
+function applyPaceFeedback(runType, s, baseline) {
+  if (!baseline) return '';
+  const runs = (s.runs || []).filter(r => {
+    if (runType === 'locker' && r.type !== 'Locker') return false;
+    if (runType === 'long' && r.type !== 'LongRun') return false;
+    if (runType === 'tempo' && r.type !== 'Tempo') return false;
+    if (!r.paceSecPerKm || !r.avgHr) return false;
+    if (runType === 'locker' && (r.avgHr < 120 || r.avgHr > 145)) return false;
+    return true;
+  });
+  if (runs.length < 4) return '— Baseline (noch keine 4 vergleichbaren Läufe für Anpassung)';
+  const recent = runs.slice(-4);
+  const avgPace = recent.reduce((a, b) => a + b.paceSecPerKm, 0) / recent.length;
+  const baselineMid = (baseline[0] + baseline[1]) / 2;
+  const avgHr = recent.reduce((a, b) => a + b.avgHr, 0) / recent.length;
+  if (avgPace <= baselineMid - 10) {
+    return `↓ angepasst nach Avg ${paceFromSec(Math.round(avgPace))} aus 4 Läufen (HF ${Math.round(avgHr)})`;
+  } else if (avgPace > baselineMid + 15) {
+    return `Form schwankt — diese Woche bei aktueller Range bleiben (Avg ${paceFromSec(Math.round(avgPace))})`;
+  }
+  return `Im Baseline-Range (Avg ${paceFromSec(Math.round(avgPace))})`;
+}
+
+// ============================================================
+// MEALPREP
+// ============================================================
+
+function generatePrep(weekPlan) {
+  // Anzahl Mittagessen Mo–Fr (je nach Schicht), Anzahl Post-Training-Snacks
+  const lunches = weekPlan.days.filter(d => d.shift !== 'Nacht').length;
+  const postTrains = weekPlan.days.filter(d => d.type === 'HART' || d.type === 'MODERATE').length;
+  const trainingDays = weekPlan.days.filter(d => d.type === 'HART').length;
+
+  const shopping = [
+    { item: 'Hähnchenbrust', qty: `${Math.max(600, lunches * 180)} g`, fresh: false },
+    { item: 'Reis (Vollkorn/Basmati)', qty: '500 g trocken', fresh: false },
+    { item: 'Eier', qty: '12 Stk', fresh: false },
+    { item: 'Magerquark', qty: `${postTrains * 250 + 500} g`, fresh: false },
+    { item: 'Skyr', qty: '1.500 g (3× 500)', fresh: false },
+    { item: 'Brokkoli', qty: '600 g', fresh: false },
+    { item: 'Bananen', qty: `${Math.max(7, trainingDays * 2)} Stk`, fresh: true },
+    { item: 'Lachs', qty: '300 g', fresh: true },
+    { item: 'Salat / Tomaten', qty: '2 Köpfe + 500 g', fresh: true },
+    { item: 'Haferflocken', qty: '500 g', fresh: false },
+    { item: 'Vollkornbrot', qty: '1 Laib', fresh: false },
+    { item: 'Olivenöl, Honig, Mandeln', qty: 'nach Vorrat', fresh: false }
+  ];
+
+  const steps = [
+    'Reis 500 g aufsetzen (20 Min Kochzeit) — parallel weiterarbeiten',
+    `Hähnchen ${Math.max(600, lunches * 180)} g würzen + Ofen 200°C 25 Min`,
+    '6 Eier kochen (9 Min), abschrecken, schälen → Box 1',
+    'Brokkoli waschen, in Röschen, 5 Portionen à ~120 g vorportionieren (2 davon einfrieren)',
+    `${postTrains}× Quark/Skyr in 250-g-Behälter portionieren (Post-Training-Snacks)`,
+    `Mittag-Boxen zusammenstellen: ${Math.min(lunches, 4)}× Reis + Hähnchen + Brokkoli (Mo–Do)`,
+    'Frischwaren (Lachs, Salat) für Mi/Do nicht vorbereiten — täglich frisch'
+  ];
+
+  return { shopping, steps, lunches, postTrains };
+}
+
+// ============================================================
+// CHARTS (native Canvas)
+// ============================================================
+
+function drawLineChart(canvas, points, options) {
+  const opts = options || {};
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = { l: 36, r: 8, t: 6, b: 22 };
+  ctx.clearRect(0, 0, W, H);
+  if (!points.length) {
+    ctx.fillStyle = '#94a3b8'; ctx.font = '11px -apple-system'; ctx.textAlign = 'center';
+    ctx.fillText('Keine Daten', W/2, H/2);
+    return;
+  }
+  const xs = points.map(p => p.x);
+  const ys = points.map(p => p.y);
+  let yMin = opts.yMin != null ? opts.yMin : Math.min(...ys);
+  let yMax = opts.yMax != null ? opts.yMax : Math.max(...ys);
+  if (yMin === yMax) { yMin -= 1; yMax += 1; }
+  const xMin = 0, xMax = points.length - 1;
+  const xPx = i => pad.l + (W - pad.l - pad.r) * (i / Math.max(1, xMax));
+  const yPx = v => pad.t + (H - pad.t - pad.b) * (1 - (v - yMin) / (yMax - yMin));
+
+  // Grid
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + (H - pad.t - pad.b) * (i / 4);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+  }
+  // Y labels
+  ctx.fillStyle = '#94a3b8'; ctx.font = '10px -apple-system'; ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const v = yMax - (yMax - yMin) * (i / 4);
+    const lbl = opts.yFormat ? opts.yFormat(v) : v.toFixed(0);
+    ctx.fillText(lbl, pad.l - 4, pad.t + (H - pad.t - pad.b) * (i / 4) + 3);
+  }
+  // Line
+  ctx.strokeStyle = opts.color || '#3b82f6';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  points.forEach((p, i) => {
+    const x = xPx(i), y = yPx(p.y);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  // Points
+  ctx.fillStyle = opts.color || '#3b82f6';
+  points.forEach((p, i) => {
+    ctx.beginPath(); ctx.arc(xPx(i), yPx(p.y), 2.5, 0, 2*Math.PI); ctx.fill();
+  });
+  // X labels (first + last)
+  if (points.length > 0 && opts.xLabels) {
+    ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'center';
+    ctx.fillText(opts.xLabels[0] || '', pad.l, H - 6);
+    ctx.fillText(opts.xLabels[opts.xLabels.length - 1] || '', W - pad.r, H - 6);
+  }
+}
+
+function drawBarChart(canvas, bars, options) {
+  const opts = options || {};
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = { l: 36, r: 8, t: 6, b: 22 };
+  ctx.clearRect(0, 0, W, H);
+  if (!bars.length) {
+    ctx.fillStyle = '#94a3b8'; ctx.font = '11px -apple-system'; ctx.textAlign = 'center';
+    ctx.fillText('Keine Daten', W/2, H/2);
+    return;
+  }
+  const yMax = Math.max(...bars.map(b => b.y), 1);
+  const yMin = 0;
+  const barW = (W - pad.l - pad.r) / bars.length * 0.8;
+  const gap  = (W - pad.l - pad.r) / bars.length * 0.2;
+  // Grid
+  ctx.strokeStyle = '#e2e8f0';
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + (H - pad.t - pad.b) * (i / 4);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+  }
+  ctx.fillStyle = '#94a3b8'; ctx.font = '10px -apple-system'; ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const v = yMax - yMax * (i / 4);
+    ctx.fillText(v.toFixed(0), pad.l - 4, pad.t + (H - pad.t - pad.b) * (i / 4) + 3);
+  }
+  // Bars
+  ctx.fillStyle = opts.color || '#3b82f6';
+  bars.forEach((b, i) => {
+    const x = pad.l + i * (barW + gap) + gap/2;
+    const y = pad.t + (H - pad.t - pad.b) * (1 - b.y / yMax);
+    const h = pad.t + (H - pad.t - pad.b) - y;
+    ctx.fillRect(x, y, barW, h);
+  });
+  // X labels (first/middle/last)
+  if (bars.length > 0) {
+    ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'center';
+    const idxs = [0, Math.floor(bars.length/2), bars.length - 1];
+    idxs.forEach(i => {
+      const x = pad.l + i * (barW + gap) + gap/2 + barW/2;
+      ctx.fillText(bars[i].label || '', x, H - 6);
+    });
+  }
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+
+function renderHeader() {
+  const ph = PHASES[state.phase];
+  document.getElementById('header-info').innerHTML =
+    `<strong>${ph.name}</strong> · Woche ab <strong>${formatDateShort(state.weekStart)}</strong>${new Date(state.weekStart).getFullYear()}`;
+}
+
+function renderSetup() {
+  const sel = document.getElementById('setup-phase');
+  sel.innerHTML = PHASES.map(p => `<option value="${p.id}" ${p.id === state.phase ? 'selected' : ''}>${p.name}</option>`).join('');
+  document.getElementById('setup-week-start').value = state.weekStart;
+  document.getElementById('setup-hfmax').value = state.user.hfMax;
+  document.getElementById('setup-weight').value = state.user.weight;
+
+  const tbody = document.getElementById('phase-table');
+  tbody.innerHTML = PHASES.map(p => {
+    const long = LONG_RUN_KM[p.id] || 0;
+    const tempo = TEMPO_KM[p.id] || 0;
+    return `<tr ${p.id === state.phase ? 'style="background:#dbeafe;"' : ''}>
+      <td><strong>${p.name}</strong></td>
+      <td>${p.range}</td>
+      <td>~${p.volumeKm} km/Wo</td>
+      <td>${long > 0 ? long + ' km' : '—'}</td>
+      <td>${tempo > 0 ? tempo + ' km' : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderShifts() {
+  document.getElementById('shifts-week-start').value = state.weekStart;
+  const dates = getWeekDates();
+  const tbody = document.getElementById('shifts-table');
+  tbody.innerHTML = dates.map(iso => {
+    const sh = state.shifts[iso] || { type: 'frei', note: '' };
+    const opts = SHIFT_TYPES.map(t => `<option value="${t}" ${t === sh.type ? 'selected' : ''}>${SHIFT_LABELS[t]}</option>`).join('');
+    return `<tr>
+      <td><strong>${dayName(iso)}</strong></td>
+      <td>${formatDateShort(iso)}</td>
+      <td><select data-date="${iso}" class="shift-select">${opts}</select></td>
+      <td><input type="text" data-date="${iso}" class="shift-note" value="${sh.note || ''}" placeholder="Notiz"></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderWeek() {
+  const plan = generateWeek(state);
+  state._lastPlan = plan;
+  const banners = document.getElementById('week-banners');
+  banners.innerHTML = plan.warnings.length > 0
+    ? plan.warnings.map(w => `<div class="banner banner-warn">⚠️ ${w}</div>`).join('')
+    : `<div class="banner banner-ok">✓ Plan erfüllt alle FROZEN-Constraints</div>`;
+
+  const tbody = document.getElementById('week-table');
+  tbody.innerHTML = plan.days.map(d => {
+    const cls = `b-${d.type === 'HART' ? 'hart' : d.type === 'MODERATE' ? 'mod' : d.type === 'EASY' ? 'easy' : 'rest'}`;
+    const meal = MEAL_TIMES[d.shift];
+    return `<tr data-date="${d.date}" style="cursor:pointer;">
+      <td><strong>${d.dayName}</strong></td>
+      <td>${formatDateShort(d.date)}</td>
+      <td><span class="badge b-frozen">${SHIFT_LABELS[d.shift]}</span>${d.shiftNote ? '<br><span class="meta">'+d.shiftNote+'</span>' : ''}</td>
+      <td><span class="badge ${cls}">${d.type}</span><br><span class="meta">${d.activity || ''}</span></td>
+      <td>${d.advice}${d.paceAdvice ? '<br><span class="meta">'+d.paceAdvice+'</span>' : ''}</td>
+      <td><span class="meta">F ${meal.breakfast} · M ${meal.lunch} · A ${meal.dinner}</span></td>
+    </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('tr').forEach(tr => {
+    tr.addEventListener('click', () => openModal(tr.dataset.date));
+  });
+}
+
+let _logbookShowAll = false;
+
+function renderLogbook() {
+  // Form-Default Datum = heute
+  const dateInput = document.querySelector('#log-form input[name="date"]');
+  if (!dateInput.value) dateInput.value = isoDate(new Date());
+
+  const btnAll = document.getElementById('log-show-all');
+  if (btnAll) btnAll.textContent = _logbookShowAll ? 'Weniger' : 'Alle anzeigen';
+
+  const tbody = document.getElementById('log-table');
+  const sorted = [...(state.runs || [])].sort((a, b) => b.date.localeCompare(a.date));
+  const visible = _logbookShowAll ? sorted : sorted.slice(0, 14);
+  if (sorted.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="empty">Noch keine Einträge.</td></tr>`;
+  } else {
+    tbody.innerHTML = visible.map((r, idx) => {
+      const realIdx = state.runs.indexOf(r);
+      return `<tr>
+        <td>${formatDateShort(r.date)}</td>
+        <td><span class="badge ${r.type === 'LongRun' || r.type === 'Tempo' ? 'b-hart' : 'b-easy'}">${r.type}</span></td>
+        <td>${r.km != null ? r.km.toFixed(1) : '—'}</td>
+        <td>${paceFromSec(r.paceSecPerKm)}</td>
+        <td>${r.avgHr || '—'}${r.maxHr ? '/'+r.maxHr : ''}</td>
+        <td>${r.feeling || '—'}</td>
+        <td><span class="meta">${r.note || ''}</span></td>
+        <td><button data-idx="${realIdx}" class="log-del" style="font-size:11px;padding:2px 6px;">×</button></td>
+      </tr>`;
+    }).join('');
+    tbody.querySelectorAll('.log-del').forEach(b => b.addEventListener('click', e => {
+      const i = parseInt(e.target.dataset.idx);
+      const removed = state.runs[i];
+      if (removed && removed.id) deleteRunFromBackend(removed.id);
+      state.runs.splice(i, 1);
+      saveState(state);
+      renderLogbook();
+      renderWeek();
+    }));
+  }
+
+  renderKpis();
+  renderCharts();
+}
+
+function renderKpis() {
+  const runs = state.runs || [];
+  const today = new Date();
+  const cutoff = isoDate(new Date(today.getTime() - 28*86400000));
+  const recent = runs.filter(r => r.date >= cutoff);
+  const totalKm = recent.reduce((a, r) => a + (r.km || 0), 0);
+  document.getElementById('kpi-volume').textContent = `${totalKm.toFixed(1)} km`;
+  document.getElementById('kpi-volume-sub').textContent = `${recent.length} Einheiten`;
+
+  const lockerZ2 = recent.filter(r => r.type === 'Locker' && r.paceSecPerKm && r.avgHr && r.avgHr >= 125 && r.avgHr <= 135);
+  if (lockerZ2.length > 0) {
+    const avg = lockerZ2.reduce((a, r) => a + r.paceSecPerKm, 0) / lockerZ2.length;
+    document.getElementById('kpi-pace').textContent = paceFromSec(Math.round(avg));
+    document.getElementById('kpi-pace-sub').textContent = `${lockerZ2.length} Läufe HF 125–135`;
+  } else {
+    document.getElementById('kpi-pace').textContent = '—';
+    document.getElementById('kpi-pace-sub').textContent = 'noch keine Daten';
+  }
+
+  const longest = recent.filter(r => r.type === 'LongRun').reduce((a, r) => Math.max(a, r.km || 0), 0);
+  document.getElementById('kpi-long').textContent = longest > 0 ? `${longest.toFixed(1)} km` : '— km';
+  document.getElementById('kpi-long-sub').textContent = longest > 0 ? 'in den letzten 4 Wochen' : 'kein Long Run';
+
+  const asDays = recent.filter(r => /AS\s*[1-9]/i.test(r.note || '')).length;
+  document.getElementById('kpi-as').textContent = asDays;
+}
+
+function renderCharts() {
+  const runs = state.runs || [];
+  // Wochenkilometer (24 Wochen)
+  const weekBars = [];
+  const today = new Date();
+  for (let w = 23; w >= 0; w--) {
+    const start = new Date(today.getTime() - (w*7 + 6) * 86400000);
+    const end = new Date(today.getTime() - (w*7 - 0) * 86400000);
+    const startIso = isoDate(start), endIso = isoDate(end);
+    const sum = runs.filter(r => r.date >= startIso && r.date <= endIso && (r.type === 'Locker' || r.type === 'Tempo' || r.type === 'LongRun'))
+                    .reduce((a, r) => a + (r.km || 0), 0);
+    weekBars.push({ y: sum, label: `KW${getWeekNumber(start)}` });
+  }
+  drawBarChart(document.getElementById('chart-volume'), weekBars, { color: '#3b82f6' });
+
+  const lockerSorted = runs.filter(r => r.type === 'Locker' && r.paceSecPerKm && r.avgHr && r.avgHr >= 120 && r.avgHr <= 145)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const pacePoints = lockerSorted.map(r => ({ x: r.date, y: r.paceSecPerKm }));
+  drawLineChart(document.getElementById('chart-pace'), pacePoints, {
+    color: '#22c55e',
+    yFormat: v => paceFromSec(Math.round(v)).replace('/km',''),
+    xLabels: lockerSorted.length > 0 ? [formatDateShort(lockerSorted[0].date), formatDateShort(lockerSorted[lockerSorted.length-1].date)] : []
+  });
+
+  const hrPoints = lockerSorted.filter(r => r.avgHr).map(r => ({ x: r.date, y: r.avgHr }));
+  drawLineChart(document.getElementById('chart-hr'), hrPoints, {
+    color: '#ef4444',
+    xLabels: lockerSorted.length > 0 ? [formatDateShort(lockerSorted[0].date), formatDateShort(lockerSorted[lockerSorted.length-1].date)] : []
+  });
+
+  const allWithFeel = runs.filter(r => r.feeling).sort((a, b) => a.date.localeCompare(b.date));
+  const feelPoints = allWithFeel.map(r => ({ x: r.date, y: r.feeling }));
+  drawLineChart(document.getElementById('chart-feel'), feelPoints, {
+    color: '#f97316', yMin: 1, yMax: 10,
+    xLabels: allWithFeel.length > 0 ? [formatDateShort(allWithFeel[0].date), formatDateShort(allWithFeel[allWithFeel.length-1].date)] : []
+  });
+}
+
+function getWeekNumber(d) {
+  const date = new Date(d);
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+  const week1 = new Date(date.getFullYear(), 0, 4);
+  return 1 + Math.round(((date - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+}
+
+function renderNutrition() {
+  const plan = state._lastPlan || generateWeek(state);
+  const container = document.getElementById('nutrition-days');
+  container.innerHTML = plan.days.map(d => {
+    const meal = MEAL_TIMES[d.shift];
+    const kcal = KCAL_BY_TYPE[d.type] || 3100;
+    const cls = `b-${d.type === 'HART' ? 'hart' : d.type === 'MODERATE' ? 'mod' : d.type === 'EASY' ? 'easy' : 'rest'}`;
+    const showPostTrain = d.type === 'HART' || d.type === 'MODERATE';
+    return `<div class="meal-day">
+      <div class="md-head">
+        <div><strong>${d.dayName} ${formatDateShort(d.date)}</strong> · <span class="badge ${cls}">${d.type}</span> · ${d.activity || ''}</div>
+        <div class="meta" style="font-size:11px;color:var(--muted);">~${kcal} kcal · 130–150 g Protein</div>
+      </div>
+      <div class="meal-grid">
+        ${mealSlot('Frühstück', meal.breakfast, MEAL_VARIANTS.breakfast)}
+        ${mealSlot('Mittag', meal.lunch, MEAL_VARIANTS.lunch)}
+        ${showPostTrain ? mealSlot('Post-Training', meal.preTrain, MEAL_VARIANTS.postTrain) : '<div></div>'}
+        ${mealSlot('Abend', meal.dinner, MEAL_VARIANTS.dinner)}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function mealSlot(name, time, variants) {
+  return `<div class="meal-slot">
+    <div class="ms-name">${name}</div>
+    <div class="ms-time">${time}</div>
+    <ul>
+      ${variants.map(v => `<li>${v.name} <span class="meta">(${v.kcal} kcal · ${v.p} g P)</span></li>`).join('')}
+    </ul>
+  </div>`;
+}
+
+function renderMealprep() {
+  const plan = state._lastPlan || generateWeek(state);
+  const prep = generatePrep(plan);
+  document.getElementById('prep-shopping').innerHTML = `
+    <table>
+      <thead><tr><th>Zutat</th><th>Menge</th><th>Tag</th></tr></thead>
+      <tbody>
+        ${prep.shopping.map(s => `<tr><td>${s.item}</td><td>${s.qty}</td><td><span class="meta">${s.fresh ? 'frisch (Mi/Do)' : 'lagerfähig'}</span></td></tr>`).join('')}
+      </tbody>
+    </table>`;
+  document.getElementById('prep-steps').innerHTML = prep.steps.map(s => `<li>${s}</li>`).join('');
+  document.getElementById('prep-notes').textContent =
+    `→ Kühlschrank: ${Math.min(prep.lunches, 4)}× fertige Mittagsbox. 3 Tage haltbar. ` +
+    `Mi/Do frische Komponenten (Lachs, Salat) ergänzen.`;
+}
+
+function renderRowing() {
+  const proto = ROWING_PROTOCOLS[PHASE_PROTOCOL[state.phase]];
+  document.getElementById('rowing-protocol-title').textContent = proto.name;
+  document.getElementById('rowing-protocol-meta').textContent = proto.meta + ' · Aktive Phase: ' + PHASES[state.phase].name;
+  document.getElementById('rowing-blocks').innerHTML = proto.blocks.map(b =>
+    `<tr class="${b.cls}"><td><strong>${b.name}</strong></td><td>${b.dur}</td><td>${b.intensity}</td><td>${b.hr}</td></tr>`
+  ).join('');
+  document.getElementById('rowing-hint').textContent = proto.hint;
+
+  document.getElementById('rowing-hfmax').textContent = state.user.hfMax;
+  document.getElementById('rowing-zones').innerHTML = HR_ZONES.map(z => {
+    const lo = Math.round(state.user.hfMax * z.pct[0]);
+    const hi = Math.round(state.user.hfMax * z.pct[1]);
+    return `<tr><td><strong>${z.name}</strong></td><td>${lo}–${hi}</td><td>${z.spm}</td><td>${z.feeling}</td></tr>`;
+  }).join('');
+}
+
+function renderData() {
+  const preview = { ...state };
+  if (preview.runs && preview.runs.length > 5) {
+    preview.runs = [`...${preview.runs.length} Einträge...`];
+  }
+  delete preview._lastPlan;
+  document.getElementById('data-preview').textContent = JSON.stringify(preview, null, 2);
+}
+
+function renderAll() {
+  renderHeader();
+  renderSetup();
+  renderShifts();
+  renderWeek();
+  renderNutrition();
+  renderMealprep();
+  renderRowing();
+  renderLogbook();
+  renderData();
+}
+
+// ============================================================
+// EXPORT / IMPORT
+// ============================================================
+
+function exportJson() {
+  const data = { ...state };
+  delete data._lastPlan;
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `hm_app_state_${state.weekStart}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function importJson(file) {
+  const text = await file.text();
+  try {
+    const obj = JSON.parse(text);
+    if (obj.version !== 1) {
+      alert('Falsche Schema-Version: ' + obj.version);
+      return;
+    }
+    saveState(obj);
+    renderAll();
+    alert('Import erfolgreich.');
+  } catch (e) {
+    alert('Import fehlgeschlagen: ' + e.message);
+  }
+}
+
+function exportLogbookCsv() {
+  const runs = state.runs || [];
+  const header = ['date', 'type', 'km', 'durationMin', 'paceSecPerKm', 'paceMinPerKm', 'avgHr', 'maxHr', 'feeling', 'note'];
+  const rows = runs.map(r => [
+    r.date, r.type, r.km || '', r.durationMin || '',
+    r.paceSecPerKm || '', r.paceSecPerKm ? paceFromSec(r.paceSecPerKm) : '',
+    r.avgHr || '', r.maxHr || '', r.feeling || '', (r.note || '').replace(/"/g, '""')
+  ]);
+  const csv = [header.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `hm_logbook_${isoDate(new Date())}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+
+let modalDate = null;
+function openModal(date) {
+  modalDate = date;
+  const ov = state.overrides[date] || {};
+  document.getElementById('modal-date').value = `${dayName(date)} ${formatDateShort(date)}`;
+  document.getElementById('modal-type').value = ov.dayType || '';
+  document.getElementById('modal-note').value = ov.note || '';
+  document.getElementById('modal-bg').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal-bg').classList.remove('show');
+  modalDate = null;
+}
+
+function saveModal() {
+  if (!modalDate) return;
+  const type = document.getElementById('modal-type').value;
+  const note = document.getElementById('modal-note').value.trim();
+  if (!type && !note) {
+    delete state.overrides[modalDate];
+  } else {
+    state.overrides[modalDate] = { dayType: type || null, note };
+  }
+  saveState(state);
+  closeModal();
+  renderWeek();
+  renderNutrition();
+}
+
+// ============================================================
+// TABS
+// ============================================================
+
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(s => s.classList.toggle('active', s.id === 'tab-' + name));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+}
+
+// ============================================================
+// INIT / EVENTS
+// ============================================================
+
+function init() {
+  // Tab clicks
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.addEventListener('click', () => showTab(b.dataset.tab));
+  });
+
+  // Setup save
+  document.getElementById('setup-save').addEventListener('click', () => {
+    state.phase = parseInt(document.getElementById('setup-phase').value);
+    state.weekStart = document.getElementById('setup-week-start').value;
+    state.user.hfMax = parseInt(document.getElementById('setup-hfmax').value) || 182;
+    state.user.weight = parseFloat(document.getElementById('setup-weight').value) || 83;
+    // Ensure new week's dates have entries (preserve imported PDF data for other weeks)
+    for (const d of getWeekDates()) {
+      if (!state.shifts[d]) state.shifts[d] = { type: 'frei', note: '' };
+    }
+    saveState(state);
+    renderAll();
+    showTab('week');
+  });
+
+  // PDF upload
+  document.getElementById('pdf-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const status = document.getElementById('pdf-status');
+    status.textContent = 'Lese PDF...';
+    try {
+      const found = await parseDienstplanPdf(file);
+      const count = Object.keys(found).length;
+      if (count === 0) {
+        status.innerHTML = '<span style="color:var(--mod);">⚠️ Keine Schichten erkannt — bitte manuell unten eintragen.</span>';
+      } else {
+        for (const [d, info] of Object.entries(found)) {
+          state.shifts[d] = { ...state.shifts[d], type: info.type };
+        }
+        saveState(state);
+        renderShifts();
+        const weekFound = getWeekDates().filter(d => found[d]).length;
+        status.innerHTML = `<span style="color:var(--easy);">✓ ${count} Schichten importiert (${weekFound}/7 dieser Woche). Tabelle prüfen + speichern.</span>`;
+      }
+    } catch (err) {
+      status.innerHTML = '<span style="color:var(--hart);">Fehler: ' + err.message + '</span>';
+    }
+  });
+
+  // Shifts week navigation
+  function changeWeek(newIso) {
+    state.weekStart = newIso;
+    for (const d of getWeekDates()) {
+      if (!state.shifts[d]) state.shifts[d] = { type: 'frei', note: '' };
+    }
+    saveState(state);
+    renderAll();
+    showTab('shifts');
+  }
+  document.getElementById('shifts-week-start').addEventListener('change', e => {
+    if (e.target.value) changeWeek(e.target.value);
+  });
+  document.getElementById('shifts-prev-week').addEventListener('click', () => {
+    changeWeek(addDays(state.weekStart, -7));
+  });
+  document.getElementById('shifts-next-week').addEventListener('click', () => {
+    changeWeek(addDays(state.weekStart, 7));
+  });
+
+  // Shifts save
+  document.getElementById('shifts-save').addEventListener('click', () => {
+    document.querySelectorAll('.shift-select').forEach(sel => {
+      const d = sel.dataset.date;
+      state.shifts[d] = state.shifts[d] || {};
+      state.shifts[d].type = sel.value;
+    });
+    document.querySelectorAll('.shift-note').forEach(inp => {
+      const d = inp.dataset.date;
+      state.shifts[d] = state.shifts[d] || { type: 'frei' };
+      state.shifts[d].note = inp.value;
+    });
+    saveState(state);
+    renderAll();
+    showTab('week');
+  });
+
+  // Logbook form
+  document.getElementById('log-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const km = parseFloat(fd.get('km')) || null;
+    const dur = parseFloat(fd.get('durationMin')) || null;
+    let paceSec = paceFromInput(fd.get('pace'));
+    if (!paceSec && km && dur) paceSec = Math.round((dur * 60) / km);
+    const entry = {
+      id: crypto.randomUUID(),
+      date: fd.get('date'),
+      type: fd.get('type'),
+      km,
+      durationMin: dur,
+      paceSecPerKm: paceSec,
+      avgHr: parseInt(fd.get('avgHr')) || null,
+      maxHr: parseInt(fd.get('maxHr')) || null,
+      feeling: parseInt(fd.get('feeling')) || null,
+      note: fd.get('note') || ''
+    };
+    state.runs = state.runs || [];
+    state.runs.push(entry);
+    saveState(state);
+    pushRunsToBackend([entry]);
+    e.target.reset();
+    document.querySelector('#log-form input[name="date"]').value = isoDate(new Date());
+    renderLogbook();
+    renderWeek();
+  });
+  document.getElementById('log-clear').addEventListener('click', () => {
+    document.getElementById('log-form').reset();
+    document.querySelector('#log-form input[name="date"]').value = isoDate(new Date());
+  });
+  document.getElementById('log-export-csv').addEventListener('click', exportLogbookCsv);
+  document.getElementById('log-show-all').addEventListener('click', () => { _logbookShowAll = !_logbookShowAll; renderLogbook(); });
+
+  // TCX/GPX upload
+  document.getElementById('tcx-input').addEventListener('change', async (e) => {
+    const files = [...e.target.files];
+    const status = document.getElementById('tcx-status');
+    if (files.length === 0) return;
+    status.textContent = `${files.length} Datei(en) wird gelesen...`;
+    let added = 0, skipped = 0, failed = 0;
+    state.runs = state.runs || [];
+    const existingIds = new Set(state.runs.filter(r => r.id).map(r => r.id));
+    const newRuns = [];
+
+    for (const file of files) {
+      try {
+        const isGpx = file.name.toLowerCase().endsWith('.gpx');
+        const run = isGpx ? await parseGpx(file) : await parseTcx(file);
+        if (existingIds.has(run.id)) { skipped++; continue; }
+        state.runs.push(run);
+        existingIds.add(run.id);
+        newRuns.push(run);
+        added++;
+      } catch (err) {
+        console.error('TCX parse error', file.name, err);
+        failed++;
+      }
+    }
+    saveState(state);
+    pushRunsToBackend(newRuns);
+    renderLogbook();
+    status.innerHTML = `<span style="color:var(--easy);">✓ ${added} importiert · ${skipped} Duplikate · ${failed} fehlgeschlagen</span>`;
+    e.target.value = '';
+  });
+
+  // Polar Sync now button
+  document.getElementById('polar-sync-now').addEventListener('click', triggerPolarSyncNow);
+
+  // Header export/import
+  document.getElementById('btn-export-json').addEventListener('click', exportJson);
+  document.getElementById('btn-import-json').addEventListener('click', () => document.getElementById('file-import').click());
+  document.getElementById('file-import').addEventListener('change', e => {
+    if (e.target.files[0]) importJson(e.target.files[0]);
+  });
+
+  // Data tab
+  document.getElementById('data-export').addEventListener('click', exportJson);
+  document.getElementById('data-import').addEventListener('click', () => document.getElementById('file-import').click());
+  document.getElementById('data-reset').addEventListener('click', () => {
+    if (confirm('Wirklich alle Daten zurücksetzen? (kein Undo)')) {
+      localStorage.removeItem(STORAGE_KEY);
+      state = defaultState();
+      saveState(state);
+      renderAll();
+    }
+  });
+
+  // Modal
+  document.getElementById('modal-cancel').addEventListener('click', closeModal);
+  document.getElementById('modal-save').addEventListener('click', saveModal);
+  document.getElementById('modal-bg').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-bg') closeModal();
+  });
+
+  renderAll();
+  updatePolarSyncDisplay();
+
+  // Auto-Migration: localStorage-Runs einmalig ans Backend schicken
+  if (!state._backendMigrated && (state.runs || []).length > 0) {
+    state.runs.forEach(r => { if (!r.id) r.id = r.polarId || crypto.randomUUID(); });
+    saveState(state);
+    pushRunsToBackend(state.runs).then(() => {
+      state._backendMigrated = true;
+      saveState(state);
+    });
+  }
+
+  // Background fetch — non-blocking, silently fails if backend offline
+  fetchAllRuns(false).then(added => {
+    if (added > 0) renderLogbook();
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,27 @@
+services:
+  marathon-frontend:
+    image: nginx:alpine
+    container_name: marathon-frontend
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    volumes:
+      - /opt/marathon-app/marathon_app.html:/usr/share/nginx/html/index.html:ro
+    networks:
+      - marathon-net
+
+  marathon-backend:
+    image: marathon-backend:latest
+    container_name: marathon-backend
+    restart: unless-stopped
+    ports:
+      - "8010:8000"
+    env_file: .env
+    volumes:
+      - ./data:/data
+    networks:
+      - marathon-net
+
+networks:
+  marathon-net:
+    name: marathon-net
