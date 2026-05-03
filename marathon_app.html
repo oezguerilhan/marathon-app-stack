@@ -673,9 +673,20 @@ function loadState() {
 function saveState(s) {
   state = s;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  if (_localStateExists) {
+    try {
+      fetch('/api/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(s),
+        signal: AbortSignal.timeout(5000)
+      }).catch(() => {});
+    } catch (_) {}
+  }
 }
 
 let state = loadState();
+let _localStateExists = !!localStorage.getItem(STORAGE_KEY);
 
 // ============================================================
 // HELPERS
@@ -2032,6 +2043,21 @@ function init() {
   fetchAllRuns(false).then(added => {
     if (added > 0) renderLogbook();
   });
+
+  // State-Restore: Backend → localStorage wenn lokal leer (z.B. nach Cache-Clear)
+  if (!_localStateExists) {
+    fetch('/api/state', { signal: AbortSignal.timeout(5000) })
+      .then(r => r.ok ? r.json() : null)
+      .then(s => {
+        _localStateExists = true;
+        if (!s || typeof s !== 'object' || !s.version) return;
+        Object.assign(state, s);
+        if (state.theme) applyTheme(state.theme);
+        saveState(state);
+        renderAll();
+      })
+      .catch(() => { _localStateExists = true; });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);

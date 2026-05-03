@@ -40,6 +40,7 @@ TOKEN_FILE = DATA_DIR / "token.json"
 RUNS_FILE = DATA_DIR / "all_runs.json"
 DELETED_IDS_FILE = DATA_DIR / "deleted_ids.json"
 STATE_FILE = DATA_DIR / "oauth_state.txt"
+APP_STATE_FILE = DATA_DIR / "app_state.json"
 LAST_SYNC_FILE = DATA_DIR / "last_sync.txt"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -392,6 +393,17 @@ async def delete_run(run_id: str) -> dict:
 @app.post("/api/sync-now")
 async def sync_now() -> dict:
     return await pull_polar_exercises()
+
+@app.get("/api/state")
+async def get_app_state() -> dict:
+    return _read_json(APP_STATE_FILE, {})
+
+@app.post("/api/state")
+async def save_app_state(payload: dict = Body(...)) -> dict:
+    # Strip runs and _lastPlan from state to avoid duplication (runs have their own endpoint)
+    sanitized = {k: v for k, v in payload.items() if k not in ("runs", "_lastPlan", "_backendMigrated")}
+    _write_json(APP_STATE_FILE, sanitized)
+    return {"ok": True}
 
 @app.get("/api/polar/auth/start")
 async def auth_start() -> RedirectResponse:
