@@ -16,13 +16,35 @@
     --text:    #1e293b; --muted:     #64748b;
     --border:  #e2e8f0; --bg:        #f8fafc;
     --card:    #ffffff;
+    --hover:   #f1f5f9;
+    --shadow:  0 1px 2px rgba(15, 23, 42, 0.06);
+    --radius:  12px;
   }
+  [data-theme="dark"] {
+    --hart:    #f87171; --hart-l:    #3a1a1d;
+    --mod:     #fb923c; --mod-l:     #3a2415;
+    --easy:    #4ade80; --easy-l:    #14301f;
+    --rest:    #94a3b8; --rest-l:    #1e293b;
+    --frozen:  #a78bfa; --frozen-l:  #2a1d4a;
+    --blue:    #60a5fa; --blue-l:    #15244a;
+    --text:    #e2e8f0; --muted:     #94a3b8;
+    --border:  #1e293b; --bg:        #0b1220;
+    --card:    #111a2e;
+    --hover:   #172238;
+    --shadow:  0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+  [data-theme="dark"] .banner-info  { color: #bfdbfe; border-color: #1e3a8a; }
+  [data-theme="dark"] .banner-warn  { color: #fed7aa; border-color: #7c2d12; }
+  [data-theme="dark"] .banner-ok    { color: #bbf7d0; border-color: #166534; }
+  [data-theme="dark"] button.primary { color: #0b1220; }
+  [data-theme="dark"] button.primary:hover { background: #93c5fd; }
+  [data-theme="dark"] .modal-bg { background: rgba(0,0,0,0.6); }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: var(--bg); color: var(--text); }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 18px 18px 40px; font-size: 13px; line-height: 1.5; max-width: 1200px; margin: 0 auto; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 18px 18px 40px; font-size: 14px; line-height: 1.55; max-width: 1200px; margin: 0 auto; transition: background-color 0.18s ease, color 0.18s ease; }
 
-  h1 { font-size: 20px; font-weight: 700; }
-  h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 10px; }
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  h2 { font-size: 13px; font-weight: 600; letter-spacing: 0.02em; color: var(--muted); margin-bottom: 10px; }
   h3 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
 
   /* Header */
@@ -38,15 +60,16 @@
   button.danger { background: var(--hart); color: white; border-color: var(--hart); }
 
   /* Tabs */
-  nav.tabs { display: flex; gap: 2px; flex-wrap: wrap; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
-  nav.tabs button { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 8px 12px; font-size: 13px; color: var(--muted); border-radius: 0; }
-  nav.tabs button.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+  nav.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+  nav.tabs button { background: transparent; border: 1px solid transparent; padding: 7px 12px; font-size: 13px; color: var(--muted); border-radius: 8px; }
+  nav.tabs button:hover { background: var(--hover); }
+  nav.tabs button.active { color: var(--blue); background: var(--blue-l); border-color: transparent; font-weight: 600; }
 
   section.tab { display: none; }
   section.tab.active { display: block; }
 
   /* Cards */
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
   .card .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
@@ -66,7 +89,7 @@
   th { padding: 7px 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); background: var(--bg); border-bottom: 1px solid var(--border); text-align: left; }
   td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
   tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--bg); }
+  tr:hover td { background: var(--hover); }
 
   /* Badges */
   .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
@@ -76,6 +99,8 @@
   .b-rest   { background: var(--rest-l);   color: var(--muted); }
   .b-frozen { background: var(--frozen-l); color: var(--frozen); }
   .b-blue   { background: var(--blue-l);   color: var(--blue); }
+  select.log-type { width: auto; border: none; padding: 2px 6px; font-size: 11px; font-weight: 600; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: none; padding-right: 18px; background-position: right 4px center; background-repeat: no-repeat; background-size: 8px; }
+  select.log-type:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
 
   /* Banners */
   .banner { padding: 10px 12px; border-radius: 8px; font-size: 12px; margin-bottom: 10px; }
@@ -89,13 +114,13 @@
 
   /* Charts */
   canvas { display: block; max-width: 100%; height: auto; }
-  .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+  .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
   .chart-card .chart-title { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
 
   /* KPI */
-  .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .kpi { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); }
   .kpi .kpi-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); font-weight: 600; }
-  .kpi .kpi-value { font-size: 18px; font-weight: 700; margin-top: 2px; }
+  .kpi .kpi-value { font-size: 24px; font-weight: 700; margin-top: 4px; letter-spacing: -0.02em; }
   .kpi .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
   /* Modal */
@@ -144,6 +169,18 @@
     .grid-2, .grid-3, .grid-4, .meal-grid { grid-template-columns: 1fr; }
   }
 </style>
+<script>
+  // Apply theme synchronously before <body> renders to avoid flash.
+  (function() {
+    try {
+      var raw = localStorage.getItem('hm_app_state_v1');
+      var theme = null;
+      if (raw) { try { theme = JSON.parse(raw).theme || null; } catch (_) {} }
+      if (!theme) theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+    } catch (_) {}
+  })();
+</script>
 </head>
 <body>
 
@@ -153,6 +190,7 @@
     <div class="info" id="header-info">Phase — · Woche ab —</div>
   </div>
   <div class="actions no-print">
+    <button id="btn-theme-toggle" title="Theme umschalten" aria-label="Theme">🌙</button>
     <button id="btn-export-json">Export JSON</button>
     <button id="btn-import-json">Import JSON</button>
     <input type="file" id="file-import" accept=".json" hidden>
@@ -282,7 +320,7 @@
         <div class="field"><label>Datum</label><input type="date" name="date" required></div>
         <div class="field"><label>Typ</label>
           <select name="type">
-            <option>Locker</option><option>Tempo</option><option>LongRun</option>
+            <option>Locker</option><option>Tempo</option><option>LongRun</option><option>Rennen</option>
             <option>Tennis</option><option>Padel</option><option>Gym</option><option>Rudern</option>
           </select>
         </div>
@@ -683,6 +721,41 @@ function paceFromInput(str) {
   return parseInt(m[1]) * 60 + parseInt(m[2]);
 }
 
+const RUN_TYPES = ['Locker', 'Tempo', 'LongRun', 'Rennen', 'Tennis', 'Padel', 'Gym', 'Rudern'];
+
+function typeBadgeClass(t) {
+  switch (t) {
+    case 'Rennen':  return 'b-frozen';
+    case 'Tempo':   return 'b-hart';
+    case 'LongRun': return 'b-mod';
+    case 'Locker':  return 'b-easy';
+    default:        return 'b-rest';
+  }
+}
+
+function classifyRunType(run, hfMax) {
+  const note = (run && run.note ? String(run.note) : '').toLowerCase();
+  if (/staffel|relay|rennen|wettkampf|race/.test(note)) return 'Rennen';
+  if (/tempo|threshold|schwelle|interval/.test(note)) return 'Tempo';
+  if (/long ?run|langlauf|\blr\b/.test(note)) return 'LongRun';
+
+  const km   = Number(run && run.km) || 0;
+  const pace = Number(run && run.paceSecPerKm) || 0;
+  const avg  = Number(run && run.avgHr) || 0;
+  const max  = Number(run && run.maxHr) || 0;
+  const hf   = Number(hfMax) || 182;
+  const avgPct = avg > 0 ? avg / hf : 0;
+  const maxPct = max > 0 ? max / hf : 0;
+  const hasHr  = avg > 0 || max > 0;
+
+  if (pace > 0 && pace < 330 && km >= 4 && (avgPct >= 0.88 || maxPct >= 0.95)) return 'Rennen';
+  if (pace >= 310 && pace <= 380 && km < 14) {
+    if (hasHr ? avgPct >= 0.80 : pace < 360) return 'Tempo';
+  }
+  if (km >= 14) return 'LongRun';
+  return 'Locker';
+}
+
 function paceRangeStr(range) {
   if (!range) return '—';
   return `${paceFromSec(range[0]).replace('/km','')}–${paceFromSec(range[1])}`;
@@ -830,12 +903,17 @@ async function parseTcx(file) {
   const durationMin = totalSec / 60;
   const paceSecPerKm = km > 0.05 ? Math.round(totalSec / km) : null;
 
-  // Type guess from sport attribute
-  let type = 'Locker';
-  if (/biking|cycling/i.test(sport)) type = 'Rudern'; // closest in app schema
-  if (sport === 'Other' || sport === '') type = 'Locker';
-
   const polarId = id || null;
+  const note = 'Polar TCX';
+  let type;
+  if (/biking|cycling/i.test(sport)) {
+    type = 'Rudern';
+  } else {
+    type = classifyRunType(
+      { km: km, paceSecPerKm, avgHr, maxHr, note },
+      state && state.user ? state.user.hfMax : 182
+    );
+  }
   return {
     id: polarId || crypto.randomUUID(),
     date: startTime ? startTime.slice(0, 10) : isoDate(new Date()),
@@ -846,7 +924,7 @@ async function parseTcx(file) {
     avgHr,
     maxHr,
     feeling: null,
-    note: 'Polar TCX',
+    note,
     polarId
   };
 }
@@ -891,17 +969,23 @@ async function parseGpx(file) {
   const durationMin = totalSec / 60;
   const paceSecPerKm = km > 0.05 ? Math.round(totalSec / km) : null;
 
+  const note = 'Polar GPX';
+  const type = classifyRunType(
+    { km, paceSecPerKm, avgHr, maxHr, note },
+    state && state.user ? state.user.hfMax : 182
+  );
+
   return {
     id: crypto.randomUUID(),
     date: firstTime.slice(0, 10),
-    type: 'Locker',
+    type,
     km: Math.round(km * 10) / 10,
     durationMin: Math.round(durationMin * 10) / 10,
     paceSecPerKm,
     avgHr,
     maxHr,
     feeling: null,
-    note: 'Polar GPX',
+    note,
     polarId: null
   };
 }
@@ -1236,6 +1320,13 @@ function generatePrep(weekPlan) {
 // CHARTS (native Canvas)
 // ============================================================
 
+function themeColor(name, fallback) {
+  try {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback;
+  } catch (_) { return fallback; }
+}
+
 function drawLineChart(canvas, points, options) {
   const opts = options || {};
   const ctx = canvas.getContext('2d');
@@ -1243,7 +1334,7 @@ function drawLineChart(canvas, points, options) {
   const pad = { l: 36, r: 8, t: 6, b: 22 };
   ctx.clearRect(0, 0, W, H);
   if (!points.length) {
-    ctx.fillStyle = '#94a3b8'; ctx.font = '11px -apple-system'; ctx.textAlign = 'center';
+    ctx.fillStyle = themeColor('--muted', '#94a3b8'); ctx.font = '11px -apple-system'; ctx.textAlign = 'center';
     ctx.fillText('Keine Daten', W/2, H/2);
     return;
   }
@@ -1257,20 +1348,21 @@ function drawLineChart(canvas, points, options) {
   const yPx = v => pad.t + (H - pad.t - pad.b) * (1 - (v - yMin) / (yMax - yMin));
 
   // Grid
-  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+  ctx.strokeStyle = themeColor('--border', '#e2e8f0'); ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i++) {
     const y = pad.t + (H - pad.t - pad.b) * (i / 4);
     ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
   }
   // Y labels
-  ctx.fillStyle = '#94a3b8'; ctx.font = '10px -apple-system'; ctx.textAlign = 'right';
+  ctx.fillStyle = themeColor('--muted', '#94a3b8'); ctx.font = '10px -apple-system'; ctx.textAlign = 'right';
   for (let i = 0; i <= 4; i++) {
     const v = yMax - (yMax - yMin) * (i / 4);
     const lbl = opts.yFormat ? opts.yFormat(v) : v.toFixed(0);
     ctx.fillText(lbl, pad.l - 4, pad.t + (H - pad.t - pad.b) * (i / 4) + 3);
   }
   // Line
-  ctx.strokeStyle = opts.color || '#3b82f6';
+  const lineColor = opts.color || themeColor('--blue', '#3b82f6');
+  ctx.strokeStyle = lineColor;
   ctx.lineWidth = 2;
   ctx.beginPath();
   points.forEach((p, i) => {
@@ -1279,13 +1371,13 @@ function drawLineChart(canvas, points, options) {
   });
   ctx.stroke();
   // Points
-  ctx.fillStyle = opts.color || '#3b82f6';
+  ctx.fillStyle = lineColor;
   points.forEach((p, i) => {
     ctx.beginPath(); ctx.arc(xPx(i), yPx(p.y), 2.5, 0, 2*Math.PI); ctx.fill();
   });
   // X labels (first + last)
   if (points.length > 0 && opts.xLabels) {
-    ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'center';
+    ctx.fillStyle = themeColor('--muted', '#94a3b8'); ctx.textAlign = 'center';
     ctx.fillText(opts.xLabels[0] || '', pad.l, H - 6);
     ctx.fillText(opts.xLabels[opts.xLabels.length - 1] || '', W - pad.r, H - 6);
   }
@@ -1298,7 +1390,7 @@ function drawBarChart(canvas, bars, options) {
   const pad = { l: 36, r: 8, t: 6, b: 22 };
   ctx.clearRect(0, 0, W, H);
   if (!bars.length) {
-    ctx.fillStyle = '#94a3b8'; ctx.font = '11px -apple-system'; ctx.textAlign = 'center';
+    ctx.fillStyle = themeColor('--muted', '#94a3b8'); ctx.font = '11px -apple-system'; ctx.textAlign = 'center';
     ctx.fillText('Keine Daten', W/2, H/2);
     return;
   }
@@ -1307,18 +1399,18 @@ function drawBarChart(canvas, bars, options) {
   const barW = (W - pad.l - pad.r) / bars.length * 0.8;
   const gap  = (W - pad.l - pad.r) / bars.length * 0.2;
   // Grid
-  ctx.strokeStyle = '#e2e8f0';
+  ctx.strokeStyle = themeColor('--border', '#e2e8f0');
   for (let i = 0; i <= 4; i++) {
     const y = pad.t + (H - pad.t - pad.b) * (i / 4);
     ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
   }
-  ctx.fillStyle = '#94a3b8'; ctx.font = '10px -apple-system'; ctx.textAlign = 'right';
+  ctx.fillStyle = themeColor('--muted', '#94a3b8'); ctx.font = '10px -apple-system'; ctx.textAlign = 'right';
   for (let i = 0; i <= 4; i++) {
     const v = yMax - yMax * (i / 4);
     ctx.fillText(v.toFixed(0), pad.l - 4, pad.t + (H - pad.t - pad.b) * (i / 4) + 3);
   }
   // Bars
-  ctx.fillStyle = opts.color || '#3b82f6';
+  ctx.fillStyle = opts.color || themeColor('--blue', '#3b82f6');
   bars.forEach((b, i) => {
     const x = pad.l + i * (barW + gap) + gap/2;
     const y = pad.t + (H - pad.t - pad.b) * (1 - b.y / yMax);
@@ -1327,7 +1419,7 @@ function drawBarChart(canvas, bars, options) {
   });
   // X labels (first/middle/last)
   if (bars.length > 0) {
-    ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'center';
+    ctx.fillStyle = themeColor('--muted', '#94a3b8'); ctx.textAlign = 'center';
     const idxs = [0, Math.floor(bars.length/2), bars.length - 1];
     idxs.forEach(i => {
       const x = pad.l + i * (barW + gap) + gap/2 + barW/2;
@@ -1428,9 +1520,11 @@ function renderLogbook() {
   } else {
     tbody.innerHTML = visible.map((r, idx) => {
       const realIdx = state.runs.indexOf(r);
+      const cls = typeBadgeClass(r.type);
+      const opts = RUN_TYPES.map(t => `<option value="${t}"${t === r.type ? ' selected' : ''}>${t}</option>`).join('');
       return `<tr>
         <td>${formatDateShort(r.date)}</td>
-        <td><span class="badge ${r.type === 'LongRun' || r.type === 'Tempo' ? 'b-hart' : 'b-easy'}">${r.type}</span></td>
+        <td><select data-idx="${realIdx}" class="log-type badge ${cls}">${opts}</select></td>
         <td>${r.km != null ? r.km.toFixed(1) : '—'}</td>
         <td>${paceFromSec(r.paceSecPerKm)}</td>
         <td>${r.avgHr || '—'}${r.maxHr ? '/'+r.maxHr : ''}</td>
@@ -1447,6 +1541,15 @@ function renderLogbook() {
       saveState(state);
       renderLogbook();
       renderWeek();
+    }));
+    tbody.querySelectorAll('.log-type').forEach(sel => sel.addEventListener('change', e => {
+      const i = parseInt(e.target.dataset.idx);
+      const run = state.runs[i];
+      if (!run) return;
+      run.type = e.target.value;
+      saveState(state);
+      pushRunsToBackend([run]);
+      renderLogbook();
     }));
   }
 
@@ -1490,31 +1593,31 @@ function renderCharts() {
     const start = new Date(today.getTime() - (w*7 + 6) * 86400000);
     const end = new Date(today.getTime() - (w*7 - 0) * 86400000);
     const startIso = isoDate(start), endIso = isoDate(end);
-    const sum = runs.filter(r => r.date >= startIso && r.date <= endIso && (r.type === 'Locker' || r.type === 'Tempo' || r.type === 'LongRun'))
+    const sum = runs.filter(r => r.date >= startIso && r.date <= endIso && (r.type === 'Locker' || r.type === 'Tempo' || r.type === 'LongRun' || r.type === 'Rennen'))
                     .reduce((a, r) => a + (r.km || 0), 0);
     weekBars.push({ y: sum, label: `KW${getWeekNumber(start)}` });
   }
-  drawBarChart(document.getElementById('chart-volume'), weekBars, { color: '#3b82f6' });
+  drawBarChart(document.getElementById('chart-volume'), weekBars, { color: themeColor('--blue', '#3b82f6') });
 
   const lockerSorted = runs.filter(r => r.type === 'Locker' && r.paceSecPerKm && r.avgHr && r.avgHr >= 120 && r.avgHr <= 145)
     .sort((a, b) => a.date.localeCompare(b.date));
   const pacePoints = lockerSorted.map(r => ({ x: r.date, y: r.paceSecPerKm }));
   drawLineChart(document.getElementById('chart-pace'), pacePoints, {
-    color: '#22c55e',
+    color: themeColor('--easy', '#22c55e'),
     yFormat: v => paceFromSec(Math.round(v)).replace('/km',''),
     xLabels: lockerSorted.length > 0 ? [formatDateShort(lockerSorted[0].date), formatDateShort(lockerSorted[lockerSorted.length-1].date)] : []
   });
 
   const hrPoints = lockerSorted.filter(r => r.avgHr).map(r => ({ x: r.date, y: r.avgHr }));
   drawLineChart(document.getElementById('chart-hr'), hrPoints, {
-    color: '#ef4444',
+    color: themeColor('--hart', '#ef4444'),
     xLabels: lockerSorted.length > 0 ? [formatDateShort(lockerSorted[0].date), formatDateShort(lockerSorted[lockerSorted.length-1].date)] : []
   });
 
   const allWithFeel = runs.filter(r => r.feeling).sort((a, b) => a.date.localeCompare(b.date));
   const feelPoints = allWithFeel.map(r => ({ x: r.date, y: r.feeling }));
   drawLineChart(document.getElementById('chart-feel'), feelPoints, {
-    color: '#f97316', yMin: 1, yMax: 10,
+    color: themeColor('--mod', '#f97316'), yMin: 1, yMax: 10,
     xLabels: allWithFeel.length > 0 ? [formatDateShort(allWithFeel[0].date), formatDateShort(allWithFeel[allWithFeel.length-1].date)] : []
   });
 }
@@ -1709,7 +1812,30 @@ function showTab(name) {
 // INIT / EVENTS
 // ============================================================
 
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('btn-theme-toggle');
+  if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+function initTheme() {
+  if (!state.theme) {
+    state.theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    saveState(state);
+  }
+  applyTheme(state.theme);
+}
+
 function init() {
+  initTheme();
+
+  document.getElementById('btn-theme-toggle').addEventListener('click', () => {
+    state.theme = (state.theme === 'dark' ? 'light' : 'dark');
+    saveState(state);
+    applyTheme(state.theme);
+    if (typeof renderCharts === 'function') renderCharts();
+  });
+
   // Tab clicks
   document.querySelectorAll('.tab-btn').forEach(b => {
     b.addEventListener('click', () => showTab(b.dataset.tab));

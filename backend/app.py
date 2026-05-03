@@ -29,6 +29,7 @@ POLAR_CLIENT_ID = os.environ.get("POLAR_CLIENT_ID", "")
 POLAR_CLIENT_SECRET = os.environ.get("POLAR_CLIENT_SECRET", "")
 POLAR_REDIRECT_URI = os.environ.get("POLAR_REDIRECT_URI", "")
 SYNC_HOUR_UTC = int(os.environ.get("SYNC_HOUR_UTC", "3"))  # 03:00 UTC = 04:00/05:00 DE
+HF_MAX = int(os.environ.get("HF_MAX", "182"))
 DATA_DIR = Path(os.environ.get("DATA_DIR", "/data"))
 
 POLAR_AUTH_URL = "https://flow.polar.com/oauth2/authorization"
@@ -112,6 +113,33 @@ def iso_duration_to_seconds(s: str | None) -> float:
     sec = float(m.group("s") or 0)
     return h * 3600 + mn * 60 + sec
 
+def classify_run_type(run: dict, hf_max: int = 182) -> str:
+    note = (run.get("note") or "").lower()
+    if re.search(r"staffel|relay|rennen|wettkampf|race", note):
+        return "Rennen"
+    if re.search(r"tempo|threshold|schwelle|interval", note):
+        return "Tempo"
+    if re.search(r"long ?run|langlauf|\blr\b", note):
+        return "LongRun"
+
+    km = float(run.get("km") or 0)
+    pace = float(run.get("paceSecPerKm") or 0)
+    avg = float(run.get("avgHr") or 0)
+    mx = float(run.get("maxHr") or 0)
+    hf = float(hf_max or 182)
+    avg_pct = avg / hf if avg > 0 else 0
+    max_pct = mx / hf if mx > 0 else 0
+    has_hr = avg > 0 or mx > 0
+
+    if pace > 0 and pace < 330 and km >= 4 and (avg_pct >= 0.88 or max_pct >= 0.95):
+        return "Rennen"
+    if 310 <= pace <= 380 and km < 14:
+        if (avg_pct >= 0.80) if has_hr else (pace < 360):
+            return "Tempo"
+    if km >= 14:
+        return "LongRun"
+    return "Locker"
+
 def map_polar_to_run(ex: dict) -> dict | None:
     """Polar Exercise summary → HM-App run schema."""
     sport = (ex.get("sport") or "").upper()
@@ -138,17 +166,29 @@ def map_polar_to_run(ex: dict) -> dict | None:
     if not polar_id:
         return None
 
+    note = f"Polar API · {detailed}".strip(" ·")
+    run_type = classify_run_type(
+        {
+            "km": round(km * 10) / 10,
+            "paceSecPerKm": pace_sec_per_km,
+            "avgHr": avg_hr,
+            "maxHr": max_hr,
+            "note": note,
+        },
+        HF_MAX,
+    )
+
     return {
         "id": polar_id,
         "date": start_time[:10] if start_time else "",
-        "type": "Locker",
+        "type": run_type,
         "km": round(km * 10) / 10,
         "durationMin": round(duration_sec / 60 * 10) / 10,
         "paceSecPerKm": pace_sec_per_km,
         "avgHr": avg_hr,
         "maxHr": max_hr,
         "feeling": None,
-        "note": f"Polar API · {detailed}".strip(" ·"),
+        "note": note,
         "polarId": polar_id,
     }
 
