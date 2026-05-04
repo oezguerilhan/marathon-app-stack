@@ -321,7 +321,7 @@
         <div class="field"><label>Typ</label>
           <select name="type">
             <option>Locker</option><option>Tempo</option><option>LongRun</option><option>Rennen</option>
-            <option>Tennis</option><option>Padel</option><option>Gym</option><option>Rudern</option>
+            <option>Tennis</option><option>Padel</option><option>Gym</option><option>Rudern</option><option>Walking</option>
           </select>
         </div>
         <div class="field"><label>Strecke (km)</label><input type="number" name="km" step="0.1" min="0"></div>
@@ -732,7 +732,7 @@ function paceFromInput(str) {
   return parseInt(m[1]) * 60 + parseInt(m[2]);
 }
 
-const RUN_TYPES = ['Locker', 'Tempo', 'LongRun', 'Rennen', 'Tennis', 'Padel', 'Gym', 'Rudern'];
+const RUN_TYPES = ['Locker', 'Tempo', 'LongRun', 'Rennen', 'Tennis', 'Padel', 'Gym', 'Rudern', 'Walking'];
 
 function typeBadgeClass(t) {
   switch (t) {

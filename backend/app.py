@@ -144,13 +144,12 @@ def classify_run_type(run: dict, hf_max: int = 182) -> str:
 def map_polar_to_run(ex: dict) -> dict | None:
     """Polar Exercise summary → HM-App run schema."""
     sport = (ex.get("sport") or "").upper()
-    detailed = ex.get("detailed-sport-info") or ex.get("detailedSportInfo") or ""
-    # Filter: only running activities
-    if sport not in ("RUNNING", ""):
-        # Only take running. Skip biking, swimming, etc.
-        # detailed-sport-info also signals running variants
-        if "RUNNING" not in (detailed or "").upper():
-            return None
+    detailed = (ex.get("detailed-sport-info") or ex.get("detailedSportInfo") or "").upper()
+    is_running = sport == "RUNNING" or (sport == "" and "RUNNING" in detailed)
+    is_walking = sport == "WALKING"
+    is_rowing  = sport == "ROWING" or "ROWING" in detailed
+    if not (is_running or is_walking or is_rowing):
+        return None
 
     start_time = ex.get("start-time") or ex.get("startTime") or ""
     duration_sec = iso_duration_to_seconds(ex.get("duration"))
@@ -168,16 +167,21 @@ def map_polar_to_run(ex: dict) -> dict | None:
         return None
 
     note = f"Polar API · {detailed}".strip(" ·")
-    run_type = classify_run_type(
-        {
-            "km": round(km * 10) / 10,
-            "paceSecPerKm": pace_sec_per_km,
-            "avgHr": avg_hr,
-            "maxHr": max_hr,
-            "note": note,
-        },
-        HF_MAX,
-    )
+    if is_walking:
+        run_type = "Walking"
+    elif is_rowing:
+        run_type = "Rudern"
+    else:
+        run_type = classify_run_type(
+            {
+                "km": round(km * 10) / 10,
+                "paceSecPerKm": pace_sec_per_km,
+                "avgHr": avg_hr,
+                "maxHr": max_hr,
+                "note": note,
+            },
+            HF_MAX,
+        )
 
     return {
         "id": polar_id,
