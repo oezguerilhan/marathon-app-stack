@@ -168,6 +168,17 @@
   @media (max-width: 480px) {
     .grid-2, .grid-3, .grid-4, .meal-grid { grid-template-columns: 1fr; }
   }
+  details summary { cursor: pointer; font-weight: 600; font-size: 13px; padding: 4px 0; list-style: none; display: flex; align-items: center; gap: 6px; }
+  details summary::before { content: '▶'; font-size: 10px; color: var(--muted); transition: transform 0.15s; }
+  details[open] summary::before { transform: rotate(90deg); }
+  details summary::-webkit-details-marker { display: none; }
+  .routine-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  .routine-table th { background: var(--bg); padding: 5px 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); border-bottom: 1px solid var(--border); text-align: left; }
+  .routine-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .routine-table tr:last-child td { border-bottom: none; }
+  .checklist { list-style: none; padding: 0; margin: 0; }
+  .checklist li { padding: 4px 0; font-size: 13px; display: flex; align-items: flex-start; gap: 8px; }
+  .checklist li::before { content: '☐'; font-size: 14px; color: var(--muted); flex-shrink: 0; }
 </style>
 <script>
   // Apply theme synchronously before <body> renders to avoid flash.
@@ -202,6 +213,7 @@
   <button class="tab-btn" data-tab="shifts">Dienstplan</button>
   <button class="tab-btn" data-tab="week">Wochenplan</button>
   <button class="tab-btn" data-tab="log">Lauf-Logbook</button>
+  <button class="tab-btn" data-tab="routinen">Routinen</button>
   <button class="tab-btn" data-tab="nutrition">Ernährung</button>
   <button class="tab-btn" data-tab="prep">Mealprep</button>
   <button class="tab-btn" data-tab="rowing">Rudern</button>
@@ -364,6 +376,142 @@
     <div class="chart-card"><div class="chart-title">HF avg Locker-Lauf</div><canvas id="chart-hr" width="500" height="180"></canvas></div>
     <div class="chart-card"><div class="chart-title">Gefühl (1–10)</div><canvas id="chart-feel" width="500" height="180"></canvas></div>
   </div>
+</section>
+
+<!-- ========== TAB: ROUTINEN ========== -->
+<section class="tab" id="tab-routinen">
+
+  <div class="card">
+    <h2>Welches Warmup?</h2>
+    <table class="routine-table">
+      <thead><tr><th>Lauf-Typ</th><th>Warmup</th><th>Dauer</th></tr></thead>
+      <tbody>
+        <tr><td>Locker ≤ 5 km</td><td><strong>A — Kurz</strong></td><td>10 Min</td></tr>
+        <tr><td>Locker &gt; 5 km · Tempo · LongRun</td><td><strong>B — Standard</strong></td><td>15 Min</td></tr>
+        <tr><td>Shakeout (3 km locker)</td><td><strong>C — Shakeout</strong></td><td>10 Min</td></tr>
+        <tr><td>Rennen / Wettkampf</td><td><strong>D — Race Day</strong></td><td>25 Min</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>Variante A — Kurz-Warmup (10 Min) · Locker ≤ 5 km</summary>
+      <table class="routine-table">
+        <thead><tr><th>Zeit</th><th>Übung</th><th>Details</th></tr></thead>
+        <tbody>
+          <tr><td>0–2 Min</td><td><strong>Zügiges Gehen</strong></td><td>100–120 Schritte/min, aufrecht, tief atmen</td></tr>
+          <tr><td>2–3 Min</td><td><strong>Ankle Circles</strong></td><td>10× pro Seite, beide Richtungen</td></tr>
+          <tr><td>3–4 Min</td><td><strong>Leg Swings vorwärts-rückwärts</strong></td><td>10× pro Bein, Wand als Stütze</td></tr>
+          <tr><td>4–5 Min</td><td><strong>Leg Swings seitlich</strong></td><td>10× pro Bein, Hüfte öffnen</td></tr>
+          <tr><td>5–6 Min</td><td><strong>Hip Circles</strong></td><td>10× pro Seite, große Kniekreise</td></tr>
+          <tr><td>6–7 Min</td><td><strong>Clamshells</strong></td><td>10× pro Seite, Glutes aktivieren</td></tr>
+          <tr><td>7–8 Min</td><td><strong>Glute Bridge</strong></td><td>10 Wdh, Pomuskel aktivieren</td></tr>
+          <tr><td>8–10 Min</td><td><strong>Lockeres Traben</strong></td><td>9:30+ Pace, nur ins Laufen kommen</td></tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
+
+  <div class="card">
+    <details open>
+      <summary>Variante B — Standard-Warmup (15 Min) · Locker / Tempo / LongRun ★</summary>
+      <p style="font-size:12px; color:var(--muted); margin:6px 0 8px;">Dein Brot &amp; Butter-Warmup. Hat am 12.04 den HF-Spike verhindert.</p>
+      <table class="routine-table">
+        <thead><tr><th>Zeit</th><th>Übung</th><th>Details</th></tr></thead>
+        <tbody>
+          <tr><td>0–3 Min</td><td><strong>Zügiges Gehen</strong></td><td>Arme mitschwingen, Atmung tief</td></tr>
+          <tr><td>3–4 Min</td><td><strong>90/90 Hip Switches</strong></td><td>10× pro Seite, Hüften mobilisieren</td></tr>
+          <tr><td>4–5 Min</td><td><strong>World's Greatest Stretch</strong></td><td>5× pro Seite, ganzer Körper</td></tr>
+          <tr><td>5–6 Min</td><td><strong>Clamshells</strong></td><td>10× pro Seite, Glutes aktivieren</td></tr>
+          <tr><td>6–7 Min</td><td><strong>Glute Bridge</strong></td><td>10 Wdh</td></tr>
+          <tr><td>7–8 Min</td><td><strong>Ankle Circles + High Knees</strong></td><td>10 Circles + 20 High Knees</td></tr>
+          <tr><td>8–9 Min</td><td><strong>Butt Kicks</strong></td><td>20 Wdh, Hamstrings wecken</td></tr>
+          <tr><td>9–12 Min</td><td><strong>Lockeres Traben</strong></td><td>9:30+ Pace, Körper warmlaufen</td></tr>
+          <tr><td>12–15 Min</td><td><strong>3–4 Steigerungen</strong></td><td>Je 10 Sek bis ~7:30, dann 30 Sek Gehpause. Nie pressen!</td></tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>Variante C — Shakeout-Warmup (10 Min) · Nur für Shakeout-Läufe</summary>
+      <p style="font-size:12px; color:var(--hart); margin:6px 0 8px;"><strong>KEINE Steigerungen!</strong> Das würde den Zweck zerstören.</p>
+      <table class="routine-table">
+        <thead><tr><th>Zeit</th><th>Übung</th><th>Details</th></tr></thead>
+        <tbody>
+          <tr><td>0–5 Min</td><td><strong>Zügiges Gehen</strong></td><td>Locker, Körper aufwecken</td></tr>
+          <tr><td>5–7 Min</td><td><strong>90/90 Hip Switches + Ankle Circles</strong></td><td>10×/Seite, Minimal-Mobility</td></tr>
+          <tr><td>7–10 Min</td><td><strong>Sehr lockeres Traben</strong></td><td>9:30+ Pace, nur in Laufmodus kommen</td></tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>Variante D — Race-Day-Warmup (25 Min) · Nur am Renntag</summary>
+      <table class="routine-table">
+        <thead><tr><th>Zeit vor Start</th><th>Übung</th><th>Details</th></tr></thead>
+        <tbody>
+          <tr><td>T–45 Min</td><td><strong>Exzentr. Wadenheben</strong></td><td>1× 15 Wdh links, Sehnen aktivieren</td></tr>
+          <tr><td>T–30 Min</td><td><strong>Pre-Race Mobility</strong></td><td>Clamshells 10/Seite · Glute Bridge 10× · Ankle Circles · BW-Kniebeugen 10×</td></tr>
+          <tr><td>T–25 Min</td><td><strong>10 Min Gehen</strong></td><td>Zügig, Arme mitschwingen</td></tr>
+          <tr><td>T–15 Min</td><td><strong>5 Min leichtes Traben</strong></td><td>Zone 1, locker</td></tr>
+          <tr><td>T–10 Min</td><td><strong>Dynamisches Dehnen</strong></td><td>Leg Swings 10×/Bein · Hip Circles 10×/Seite · 5 Ausfallschritte/Seite</td></tr>
+          <tr><td>T–5 Min</td><td><strong>2–3 Steigerungen</strong></td><td>15 Sek auf Renntempo, locker auslaufen</td></tr>
+          <tr><td>T–2 Min</td><td><strong>Atmen</strong></td><td>4-7-8 Breathing: 4 ein · 7 halten · 8 aus — 3×</td></tr>
+          <tr><td>T–0</td><td><strong>START</strong></td><td>Ruhig anfangen!</td></tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2>Standard-Cooldown — nach JEDEM Lauf (15 Min)</h2>
+    <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">Reihenfolge einhalten!</p>
+    <table class="routine-table">
+      <thead><tr><th>Schritt</th><th>Dauer</th><th>Details</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1. Auslaufen</strong></td><td>2–3 Min</td><td>Letzte 200–300 m gehen/sehr langsam traben. Nicht abrupt stehen!</td></tr>
+        <tr><td><strong>2. Sleeves anziehen</strong></td><td>sofort</td><td>SOFORT nach dem Lauf! Mindestens 2–3 h tragen.</td></tr>
+        <tr><td><strong>3. Trinken + Snack</strong></td><td>—</td><td>300–500 ml Wasser · Banane oder Reiswaffel · Protein-Mahlzeit ≤ 90 Min</td></tr>
+        <tr><td><strong>4. Foam Rolling</strong></td><td>5 Min</td><td>Waden L 60s / R 30s · IT-Band L 60s / R 30s · Quads 30s/Seite · Hamstrings 30s/Seite · Glutes 30s/Seite</td></tr>
+        <tr><td><strong>5. Statisches Dehnen</strong></td><td>3 Min</td><td>Wadendehnung 3× 60s li / 30s re · Hüftbeuger 30s/Seite · Piriformis 60s/Seite · 90/90 Hip 60s/Seite · Quads 30s/Seite</td></tr>
+        <tr><td><strong>6. Exzentr. Wadenheben</strong></td><td>3 Min</td><td>2× 15 Wdh links einbeinig (AS-Pflicht!). Beidbeinig hoch → Gewicht auf links → 3 Sek runter.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Vor dem Lauf</h3>
+      <ul class="checklist">
+        <li>Welche Warmup-Variante? (A/B/C/D)</li>
+        <li>Letztes Essen vor ≥ 1h (klein) / 90 Min (normal)</li>
+        <li>300–500 ml Wasser 1h vorher getrunken?</li>
+        <li>Sleeves bereit (für nach dem Lauf)?</li>
+        <li>Schuhe richtig geschnürt?</li>
+        <li>Route klar (Loop mit Refill-Option)?</li>
+        <li>Wetter gecheckt?</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Nach dem Lauf</h3>
+      <ul class="checklist">
+        <li>Letzte 200 m ausgelaufen (nicht abrupt stehen)?</li>
+        <li>Sleeves sofort an?</li>
+        <li>Wasser getrunken?</li>
+        <li>Foam Rolling 5 Min?</li>
+        <li>Dehnung 3 Min?</li>
+        <li>Exzentr. Wadenheben 2× 15 links?</li>
+        <li>AS/IT-Band Check (0–10)?</li>
+        <li>Lauf im Logbook eingetragen?</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ========== TAB 5: ERNÄHRUNG ========== -->
@@ -1105,7 +1253,8 @@ function generateWeek(s) {
     type: null,
     activity: null,
     advice: '',
-    paceAdvice: ''
+    paceAdvice: '',
+    warmup: null
   }));
 
   // Schritt 1: Klassifikation pro Tag
@@ -1261,6 +1410,13 @@ function generateWeek(s) {
       if (override.dayType) d.type = override.dayType;
       if (override.note) d.advice = `[Override] ${override.note}` + (d.advice ? ` · ${d.advice}` : '');
     }
+  }
+
+  // Warmup-Empfehlung pro Lauf-Tag
+  for (const d of days) {
+    if (d.activity === 'Rennen') d.warmup = 'D';
+    else if (d.activity === 'Long Run' || d.activity === 'Tempo / Fartlek') d.warmup = 'B';
+    else if (d.activity === 'Locker-Lauf' || d.activity === 'Recovery') d.warmup = 'A';
   }
 
   return { days, warnings };
@@ -1503,7 +1659,7 @@ function renderWeek() {
       <td>${formatDateShort(d.date)}</td>
       <td><span class="badge b-frozen">${SHIFT_LABELS[d.shift]}</span>${d.shiftNote ? '<br><span class="meta">'+d.shiftNote+'</span>' : ''}</td>
       <td><span class="badge ${cls}">${d.type}</span><br><span class="meta">${d.activity || ''}</span></td>
-      <td>${d.advice}${d.paceAdvice ? '<br><span class="meta">'+d.paceAdvice+'</span>' : ''}</td>
+      <td>${d.advice}${d.paceAdvice ? '<br><span class="meta">'+d.paceAdvice+'</span>' : ''}${d.warmup ? '<br><span class="badge b-blue" style="font-size:10px;cursor:pointer;" onclick="event.stopPropagation();showTab(\'routinen\')">Warmup '+d.warmup+'</span>' : ''}</td>
       <td><span class="meta">F ${meal.breakfast} · M ${meal.lunch} · A ${meal.dinner}</span></td>
     </tr>`;
   }).join('');
