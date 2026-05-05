@@ -2188,16 +2188,33 @@ function init() {
     const status = document.getElementById('tcx-status');
     if (files.length === 0) return;
     status.textContent = `${files.length} Datei(en) wird gelesen...`;
-    let added = 0, skipped = 0, failed = 0;
+    let added = 0, updated = 0, skipped = 0, failed = 0;
     state.runs = state.runs || [];
     const existingIds = new Set(state.runs.filter(r => r.id).map(r => r.id));
     const newRuns = [];
+    const updatedRuns = [];
 
     for (const file of files) {
       try {
         const isGpx = file.name.toLowerCase().endsWith('.gpx');
         const run = isGpx ? await parseGpx(file) : await parseTcx(file);
-        if (existingIds.has(run.id)) { skipped++; continue; }
+        const EXTRA = ['cadence', 'calories', 'elevationGain'];
+        // ID match → merge new fields only, don't overwrite existing data
+        if (existingIds.has(run.id)) {
+          const ex = state.runs.find(r => r.id === run.id);
+          let merged = false;
+          EXTRA.forEach(f => { if (run[f] != null && ex[f] == null) { ex[f] = run[f]; merged = true; } });
+          if (merged) { updatedRuns.push(ex); updated++; } else skipped++;
+          continue;
+        }
+        // Date-based fallback: match Polar-synced runs by date (different ID format)
+        const byDate = state.runs.find(r => r.date === run.date && EXTRA.every(f => r[f] == null));
+        if (byDate) {
+          EXTRA.forEach(f => { if (run[f] != null) byDate[f] = run[f]; });
+          updatedRuns.push(byDate);
+          updated++;
+          continue;
+        }
         state.runs.push(run);
         existingIds.add(run.id);
         newRuns.push(run);
@@ -2208,9 +2225,10 @@ function init() {
       }
     }
     saveState(state);
-    pushRunsToBackend(newRuns);
+    if (newRuns.length) pushRunsToBackend(newRuns);
+    if (updatedRuns.length) pushRunsToBackend(updatedRuns);
     renderLogbook();
-    status.innerHTML = `<span style="color:var(--easy);">✓ ${added} importiert · ${skipped} Duplikate · ${failed} fehlgeschlagen</span>`;
+    status.innerHTML = `<span style="color:var(--easy);">✓ ${added} neu · ${updated} aktualisiert · ${skipped} unverändert · ${failed} fehlgeschlagen</span>`;
     e.target.value = '';
   });
 
