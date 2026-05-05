@@ -28,8 +28,8 @@
     --frozen:  #a78bfa; --frozen-l:  #2a1d4a;
     --blue:    #60a5fa; --blue-l:    #15244a;
     --text:    #e2e8f0; --muted:     #94a3b8;
-    --border:  #1e293b; --bg:        #0b1220;
-    --card:    #111a2e;
+    --border:  #1e293b; --bg:        #07090e;
+    --card:    #0f1829;
     --hover:   #172238;
     --shadow:  0 1px 2px rgba(0, 0, 0, 0.4);
   }
@@ -292,7 +292,14 @@
 <section class="tab" id="tab-week">
   <div id="week-banners"></div>
   <div class="card">
-    <h2>Wochenplan</h2>
+    <div class="card-head">
+      <h2>Wochenplan</h2>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="week-prev-week">◀ Woche</button>
+        <input type="date" id="week-week-start" style="width:160px;">
+        <button id="week-next-week">Woche ▶</button>
+      </div>
+    </div>
     <table>
       <thead><tr><th>Tag</th><th>Datum</th><th>Schicht</th><th>Tagestyp</th><th>Empfehlung</th><th>Mahlzeiten</th></tr></thead>
       <tbody id="week-table"></tbody>
@@ -1645,6 +1652,7 @@ function renderShifts() {
 function renderWeek() {
   const plan = generateWeek(state);
   state._lastPlan = plan;
+  document.getElementById('week-week-start').value = state.weekStart;
   const banners = document.getElementById('week-banners');
   banners.innerHTML = plan.warnings.length > 0
     ? plan.warnings.map(w => `<div class="banner banner-warn">⚠️ ${w}</div>`).join('')
@@ -2056,7 +2064,6 @@ function init() {
     }
     saveState(state);
     renderAll();
-    showTab('shifts');
   }
   document.getElementById('shifts-week-start').addEventListener('change', e => {
     if (e.target.value) changeWeek(e.target.value);
@@ -2065,6 +2072,15 @@ function init() {
     changeWeek(addDays(state.weekStart, -7));
   });
   document.getElementById('shifts-next-week').addEventListener('click', () => {
+    changeWeek(addDays(state.weekStart, 7));
+  });
+  document.getElementById('week-week-start').addEventListener('change', e => {
+    if (e.target.value) changeWeek(e.target.value);
+  });
+  document.getElementById('week-prev-week').addEventListener('click', () => {
+    changeWeek(addDays(state.weekStart, -7));
+  });
+  document.getElementById('week-next-week').addEventListener('click', () => {
     changeWeek(addDays(state.weekStart, 7));
   });
 
