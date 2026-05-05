@@ -1072,17 +1072,20 @@ async function parseTcx(file) {
   const durationMin = totalSec / 60;
   const paceSecPerKm = km > 0.05 ? Math.round(totalSec / km) : null;
 
-  // Cadence: Polar TCX uses namespaced elements (ns3:AvgRunCadence / ns3:RunCadence)
-  // getElementsByTagNameNS('*', name) reliably matches any namespace prefix
+  // Cadence: Polar TCX stores as <Cadence> (direct child of Lap, not namespaced)
+  // Use direct children only so nested Trackpoint <Cadence> elements aren't counted
   let cadence = null;
-  const lapAvgCads = laps.map(l => parseFloat(l.getElementsByTagNameNS('*', 'AvgRunCadence')[0]?.textContent || 0)).filter(c => c > 0);
+  const lapAvgCads = laps.map(l =>
+    parseFloat([...l.children].find(ch => ch.localName === 'Cadence')?.textContent || 0)
+  ).filter(c => c > 0);
   if (lapAvgCads.length) {
-    cadence = Math.round(lapAvgCads.reduce((a,b)=>a+b,0) / lapAvgCads.length);
+    const avg = lapAvgCads.reduce((a,b)=>a+b,0) / lapAvgCads.length;
+    cadence = Math.round(avg < 120 ? avg * 2 : avg); // half-cadence → full
   } else {
-    const tpCads = trackpoints.map(tp => parseFloat(tp.getElementsByTagNameNS('*', 'RunCadence')[0]?.textContent || 0)).filter(c => c > 0);
+    const tpCads = trackpoints.map(tp => parseFloat(tp.getElementsByTagName('Cadence')[0]?.textContent || 0)).filter(c => c > 0);
     if (tpCads.length) {
       const avg = tpCads.reduce((a,b)=>a+b,0) / tpCads.length;
-      cadence = Math.round(avg < 120 ? avg * 2 : avg); // half-cadence → full
+      cadence = Math.round(avg < 120 ? avg * 2 : avg);
     }
   }
 
