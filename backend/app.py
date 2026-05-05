@@ -162,6 +162,12 @@ def map_polar_to_run(ex: dict) -> dict | None:
 
     pace_sec_per_km = round(duration_sec / km) if km > 0.05 else None
 
+    cad_obj = ex.get("cadence") or {}
+    cadence = int(cad_obj.get("average")) if isinstance(cad_obj, dict) and cad_obj.get("average") else None
+    calories = int(ex.get("kiloCalories") or ex.get("calories") or 0) or None
+    elev_obj = ex.get("elevation") or {}
+    elevation_gain = int(elev_obj.get("ascent") or elev_obj.get("gain") or 0) or None
+
     polar_id = str(ex.get("id") or "").strip() or None
     if not polar_id:
         return None
@@ -192,6 +198,9 @@ def map_polar_to_run(ex: dict) -> dict | None:
         "paceSecPerKm": pace_sec_per_km,
         "avgHr": avg_hr,
         "maxHr": max_hr,
+        "cadence": cadence,
+        "calories": calories,
+        "elevationGain": elevation_gain,
         "feeling": None,
         "note": note,
         "polarId": polar_id,

@@ -348,6 +348,9 @@
         <div class="field"><label>Pace mm:ss/km</label><input type="text" name="pace" placeholder="8:26"></div>
         <div class="field"><label>HF avg</label><input type="number" name="avgHr" min="60" max="220"></div>
         <div class="field"><label>HF max</label><input type="number" name="maxHr" min="60" max="220"></div>
+        <div class="field"><label>Schrittfreq. (spm)</label><input type="number" name="cadence" min="100" max="230"></div>
+        <div class="field"><label>Kalorien (kcal)</label><input type="number" name="calories" min="0"></div>
+        <div class="field"><label>Höhenmeter (m)</label><input type="number" name="elevationGain" min="0"></div>
         <div class="field"><label>Gefühl 1–10</label><input type="number" name="feeling" min="1" max="10"></div>
       </div>
       <div class="field"><label>Notiz</label><textarea name="note" placeholder="z.B. AS 0/10, Wetter, Schuhe ..."></textarea></div>
@@ -1069,6 +1072,28 @@ async function parseTcx(file) {
   const durationMin = totalSec / 60;
   const paceSecPerKm = km > 0.05 ? Math.round(totalSec / km) : null;
 
+  // Cadence: try lap-level AvgRunCadence extension, fallback to trackpoint RunCadence
+  let cadence = null;
+  const lapAvgCads = laps.map(l => parseFloat(l.querySelector('AvgRunCadence, *|AvgRunCadence')?.textContent || 0)).filter(c => c > 0);
+  if (lapAvgCads.length) {
+    cadence = Math.round(lapAvgCads.reduce((a,b)=>a+b,0) / lapAvgCads.length);
+  } else {
+    const tpCads = trackpoints.map(tp => parseFloat(tp.querySelector('RunCadence, *|RunCadence')?.textContent || 0)).filter(c => c > 0);
+    if (tpCads.length) {
+      const avg = tpCads.reduce((a,b)=>a+b,0) / tpCads.length;
+      cadence = Math.round(avg < 120 ? avg * 2 : avg); // half-cadence → full
+    }
+  }
+
+  // Calories: sum across laps
+  const calories = Math.round(laps.reduce((a, l) => a + parseFloat(l.querySelector('Calories')?.textContent || 0), 0)) || null;
+
+  // Elevation gain: sum positive altitude deltas from trackpoints (>0.5m noise filter)
+  const alts = trackpoints.map(tp => parseFloat(tp.querySelector('AltitudeMeters')?.textContent)).filter(a => !isNaN(a));
+  const elevationGain = alts.length > 1
+    ? Math.round(alts.reduce((acc, a, i) => i === 0 ? acc : acc + Math.max(0, a - alts[i-1] > 0.5 ? a - alts[i-1] : 0), 0)) || null
+    : null;
+
   const polarId = id || null;
   const note = 'Polar TCX';
   let type;
@@ -1089,6 +1114,9 @@ async function parseTcx(file) {
     paceSecPerKm,
     avgHr,
     maxHr,
+    cadence,
+    calories,
+    elevationGain,
     feeling: null,
     note,
     polarId
@@ -1131,6 +1159,17 @@ async function parseGpx(file) {
   const avgHr = hrs.length ? Math.round(hrs.reduce((a,b)=>a+b,0) / hrs.length) : null;
   const maxHr = hrs.length ? Math.max(...hrs) : null;
 
+  // Cadence from extensions
+  const cads = trkpts.map(tp => parseFloat(tp.querySelector('cadence, *|cadence, cad, *|cad')?.textContent || 0)).filter(c => c > 0);
+  const cadGpx = cads.length ? Math.round(cads.reduce((a,b)=>a+b,0) / cads.length) : null;
+  const cadence = cadGpx && cadGpx < 120 ? cadGpx * 2 : cadGpx;
+
+  // Elevation gain from <ele>
+  const eles = trkpts.map(tp => parseFloat(tp.querySelector('ele')?.textContent)).filter(e => !isNaN(e));
+  const elevationGain = eles.length > 1
+    ? Math.round(eles.reduce((acc, e, i) => i === 0 ? acc : acc + Math.max(0, e - eles[i-1] > 0.5 ? e - eles[i-1] : 0), 0)) || null
+    : null;
+
   const km = totalMeters / 1000;
   const durationMin = totalSec / 60;
   const paceSecPerKm = km > 0.05 ? Math.round(totalSec / km) : null;
@@ -1150,6 +1189,9 @@ async function parseGpx(file) {
     paceSecPerKm,
     avgHr,
     maxHr,
+    cadence,
+    calories: null,
+    elevationGain,
     feeling: null,
     note,
     polarId: null
@@ -1700,9 +1742,9 @@ function renderLogbook() {
       return `<tr>
         <td>${formatDateShort(r.date)}</td>
         <td><select data-idx="${realIdx}" class="log-type badge ${cls}">${opts}</select></td>
-        <td>${r.km != null ? r.km.toFixed(1) : '—'}</td>
-        <td>${paceFromSec(r.paceSecPerKm)}</td>
-        <td>${r.avgHr || '—'}${r.maxHr ? '/'+r.maxHr : ''}</td>
+        <td>${r.km != null ? r.km.toFixed(1) : '—'}${r.elevationGain ? '<br><span class="meta">↑'+r.elevationGain+'m</span>' : ''}</td>
+        <td>${paceFromSec(r.paceSecPerKm)}${r.cadence ? '<br><span class="meta">'+r.cadence+' spm</span>' : ''}</td>
+        <td>${r.avgHr || '—'}${r.maxHr ? '/'+r.maxHr : ''}${r.calories ? '<br><span class="meta">'+r.calories+' kcal</span>' : ''}</td>
         <td>${r.feeling || '—'}</td>
         <td><span class="meta">${r.note || ''}</span></td>
         <td><button data-idx="${realIdx}" class="log-del" style="font-size:11px;padding:2px 6px;">×</button></td>
@@ -2118,6 +2160,9 @@ function init() {
       paceSecPerKm: paceSec,
       avgHr: parseInt(fd.get('avgHr')) || null,
       maxHr: parseInt(fd.get('maxHr')) || null,
+      cadence: parseInt(fd.get('cadence')) || null,
+      calories: parseInt(fd.get('calories')) || null,
+      elevationGain: parseInt(fd.get('elevationGain')) || null,
       feeling: parseInt(fd.get('feeling')) || null,
       note: fd.get('note') || ''
     };
