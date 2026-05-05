@@ -28,9 +28,9 @@
     --frozen:  #a78bfa; --frozen-l:  #2a1d4a;
     --blue:    #60a5fa; --blue-l:    #15244a;
     --text:    #e2e8f0; --muted:     #94a3b8;
-    --border:  #1e293b; --bg:        #07090e;
-    --card:    #0f1829;
-    --hover:   #172238;
+    --border:  #28384e; --bg:        #0d1320;
+    --card:    #141d30;
+    --hover:   #1c2b42;
     --shadow:  0 1px 2px rgba(0, 0, 0, 0.4);
   }
   [data-theme="dark"] .banner-info  { color: #bfdbfe; border-color: #1e3a8a; }
@@ -1623,7 +1623,7 @@ function renderSetup() {
   tbody.innerHTML = PHASES.map(p => {
     const long = LONG_RUN_KM[p.id] || 0;
     const tempo = TEMPO_KM[p.id] || 0;
-    return `<tr ${p.id === state.phase ? 'style="background:#dbeafe;"' : ''}>
+    return `<tr ${p.id === state.phase ? 'style="background:var(--blue-l);"' : ''}>
       <td><strong>${p.name}</strong></td>
       <td>${p.range}</td>
       <td>~${p.volumeKm} km/Wo</td>
