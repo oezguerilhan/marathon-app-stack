@@ -1295,6 +1295,31 @@ function updatePolarSyncDisplay() {
 // GENERATOR
 // ============================================================
 
+function getPauseDays(runs) {
+  const runTypes = ['Locker', 'LongRun', 'Tempo', 'Walking', 'Rudern'];
+  const lastDate = (runs || [])
+    .filter(r => r.date && runTypes.includes(r.type))
+    .map(r => r.date).sort().pop();
+  if (!lastDate) return null;
+  const today = isoDate(new Date());
+  return Math.max(0, Math.floor((new Date(today) - new Date(lastDate)) / 86400000));
+}
+
+function getComebackFactor(pauseDays) {
+  if (!pauseDays || pauseDays < 10) return 1.0;
+  if (pauseDays < 14) return 0.75;
+  if (pauseDays < 21) return 0.65;
+  return 0.55;
+}
+
+function getLastWeekKm(runs) {
+  const lastMon = addDays(state.weekStart, -7);
+  const lastSun = addDays(state.weekStart, -1);
+  return Math.round(((runs || [])
+    .filter(r => r.date && r.km && r.date >= lastMon && r.date <= lastSun)
+    .reduce((a, r) => a + (r.km || 0), 0)) * 10) / 10;
+}
+
 function generateWeek(s) {
   const dates = getWeekDates();
   const phase = PHASES[s.phase];
@@ -1365,31 +1390,43 @@ function generateWeek(s) {
   }
 
   // Schritt 2: Lauf-Slots auf restliche Tage verteilen
-  const longKm = LONG_RUN_KM[s.phase];
-  const tempoKm = TEMPO_KM[s.phase];
+  const longKm   = LONG_RUN_KM[s.phase];
+  const tempoKm  = TEMPO_KM[s.phase];
   const lockerKm = LOCKER_KM[s.phase];
+
+  // Comeback-Berechnung
+  const pauseDays      = getPauseDays(s.runs);
+  const comebackFactor = getComebackFactor(pauseDays);
+  const isComeback     = comebackFactor < 1.0;
+  const effectiveLongKm   = isComeback ? Math.max(3, Math.round(longKm   * comebackFactor)) : longKm;
+  const effectiveTempoKm  = (isComeback && pauseDays >= 21) ? 0 : (isComeback ? Math.max(0, Math.round(tempoKm * comebackFactor)) : tempoKm);
+  const effectiveLockerKm = isComeback ? Math.max(3, Math.round(lockerKm * comebackFactor)) : lockerKm;
+  const comebackNote   = isComeback ? ` · ⚡ Comeback (${pauseDays}d Pause, ${Math.round(comebackFactor*100)}% Vol.)` : '';
+
+  // Volumen letzte Woche
+  const lastWeekKm  = getLastWeekKm(s.runs);
+  const plannedKm   = (longKm || 0) + (lockerKm || 0) + (tempoKm || 0);
+  const volumeOk    = plannedKm === 0 || lastWeekKm >= plannedKm * 0.7;
 
   // Long Run: Sa bevorzugt, Do als Alternative
   const longCandidates = [5, 3]; // Sa=5, Do=3
   let longIdx = -1;
-  if (longKm > 0) {
+  if (effectiveLongKm > 0) {
     for (const i of longCandidates) {
       if (days[i].type !== null) continue;
       const shift = days[i].shift;
-      // Long Run morgens: frei oder Sa-Spaet/Frueh/Nacht (Vormittag frei)
-      // Bereitschaft (09–17) und BTSBereitschaft (13–21) blockieren Vormittag
       if (shift === 'frei' || (i === 5 && shift !== 'Tag' && shift !== 'BTSBereitschaft' && shift !== 'Bereitschaft')) {
-        if (longKm > 12 && (shift === 'Tag' || shift === 'BTSBereitschaft')) continue;
+        if (effectiveLongKm > 12 && (shift === 'Tag' || shift === 'BTSBereitschaft')) continue;
         longIdx = i;
         break;
       }
     }
     if (longIdx >= 0) {
       const d = days[longIdx];
-      d.type = 'HART';
+      d.type = isComeback ? 'MODERATE' : 'HART';
       d.activity = 'Long Run';
       const range = BASELINE_PACES[s.phase].long;
-      d.advice = `Long Run ${longKm} km · ${d.dayName} morgens · Zone 2 ${paceRangeStr(range)}`;
+      d.advice = `Long Run ${effectiveLongKm} km · ${d.dayName} morgens · Zone 2 ${paceRangeStr(range)}${comebackNote}`;
       d.paceAdvice = applyPaceFeedback('long', s, range);
     }
   }
@@ -1397,12 +1434,10 @@ function generateWeek(s) {
   // Tempo: Di/Sa abends/morgens, nicht direkt vor/nach Long Run
   const tempoCandidates = [1, 5, 3]; // Di, Sa, Do
   let tempoIdx = -1;
-  if (tempoKm > 0 && phase.tempo) {
+  if (effectiveTempoKm > 0 && phase.tempo) {
     for (const i of tempoCandidates) {
       if (days[i].type !== null) continue;
-      // Nicht direkt vor/nach Long Run
       if (longIdx >= 0 && (Math.abs(i - longIdx) === 1)) continue;
-      // Frueh + Tempo abends ok; Tag/BTSBereitschaft bis 21 → kein Tempo abends
       if (days[i].shift === 'Tag' || days[i].shift === 'BTSBereitschaft') continue;
       tempoIdx = i;
       break;
@@ -1412,7 +1447,7 @@ function generateWeek(s) {
       d.type = 'HART';
       d.activity = 'Tempo / Fartlek';
       const range = BASELINE_PACES[s.phase].tempo;
-      d.advice = `Tempo ${tempoKm} km · ${d.dayName} abends · 4–6× 60–90 s Bursts ${range ? paceRangeStr(range) : '5:30–6:00/km'} · vollst. Pause`;
+      d.advice = `Tempo ${effectiveTempoKm} km · ${d.dayName} abends · 4–6× 60–90 s Bursts ${range ? paceRangeStr(range) : '5:30–6:00/km'} · vollst. Pause${comebackNote}`;
       d.paceAdvice = applyPaceFeedback('tempo', s, range);
     }
   }
@@ -1433,7 +1468,7 @@ function generateWeek(s) {
     d.activity = 'Locker-Lauf';
     const range = BASELINE_PACES[s.phase].locker;
     const fb = applyPaceFeedback('locker', s, range);
-    d.advice = `Locker ${lockerKm} km · Zone 2 · ${paceRangeStr(range)}`;
+    d.advice = `Locker ${effectiveLockerKm} km · Zone 2 · ${paceRangeStr(range)}${comebackNote}`;
     d.paceAdvice = fb;
   }
 
@@ -1472,7 +1507,7 @@ function generateWeek(s) {
     else if (d.activity === 'Locker-Lauf' || d.activity === 'Recovery') d.warmup = 'A';
   }
 
-  return { days, warnings };
+  return { days, warnings, comeback: { pauseDays, factor: comebackFactor, lastWeekKm, plannedKm, volumeOk } };
 }
 
 function applyPaceFeedback(runType, s, baseline) {
@@ -1700,9 +1735,20 @@ function renderWeek() {
   state._lastPlan = plan;
   document.getElementById('week-week-start').value = state.weekStart;
   const banners = document.getElementById('week-banners');
-  banners.innerHTML = plan.warnings.length > 0
-    ? plan.warnings.map(w => `<div class="banner banner-warn">⚠️ ${w}</div>`).join('')
-    : `<div class="banner banner-ok">✓ Plan erfüllt alle FROZEN-Constraints</div>`;
+  const cb = plan.comeback;
+  let bannerHtml = '';
+  if (cb.pauseDays >= 10) {
+    bannerHtml += `<div class="banner banner-warn">⚡ Comeback nach ${cb.pauseDays} Tagen Pause — Volumen auf ${Math.round(cb.factor*100)}% reduziert${cb.pauseDays >= 21 ? ' · Tempo-Einheit entfällt' : ''}</div>`;
+  }
+  if (!cb.volumeOk && cb.plannedKm > 0) {
+    const pct = cb.lastWeekKm > 0 ? ` (${Math.round(cb.lastWeekKm / cb.plannedKm * 100)}% des Ziels)` : '';
+    bannerHtml += `<div class="banner banner-warn">📉 Letzte Woche: ${cb.lastWeekKm} km von ~${cb.plannedKm} km geplant${pct} — Volumen angepasst</div>`;
+  }
+  if (plan.warnings.length > 0) {
+    bannerHtml += plan.warnings.map(w => `<div class="banner banner-warn">⚠️ ${w}</div>`).join('');
+  }
+  if (!bannerHtml) bannerHtml = `<div class="banner banner-ok">✓ Plan erfüllt alle FROZEN-Constraints</div>`;
+  banners.innerHTML = bannerHtml;
 
   const tbody = document.getElementById('week-table');
   tbody.innerHTML = plan.days.map(d => {
