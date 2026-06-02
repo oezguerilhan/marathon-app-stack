@@ -9,6 +9,7 @@ import logging
 import os
 import re
 import secrets
+import xml.etree.ElementTree as ET
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -225,6 +226,83 @@ async def polar_request(
     async with httpx.AsyncClient(timeout=30.0) as client:
         return await client.request(method, POLAR_API_BASE + path, headers=headers, json=json_body)
 
+def _local(tag: str) -> str:
+    """Strip XML namespace from an ElementTree tag."""
+    return tag.split("}")[-1]
+
+def parse_tcx_metrics(tcx_bytes: bytes) -> dict:
+    """Extract cadence/calories/elevationGain from a Polar TCX export.
+
+    These fields are absent from the AccessLink exercise summary JSON,
+    so we fetch the TCX per exercise and parse them here. Mirrors the
+    frontend parseTcx() logic (lap-level Cadence first, half-cadence ×2,
+    0.5m altitude noise filter).
+    """
+    try:
+        root = ET.fromstring(tcx_bytes)
+    except ET.ParseError:
+        return {}
+
+    laps = [el for el in root.iter() if _local(el.tag) == "Lap"]
+
+    calories = 0.0
+    lap_cadences: list[float] = []
+    for lap in laps:
+        for ch in list(lap):
+            lt = _local(ch.tag)
+            if lt == "Calories":
+                try:
+                    calories += float(ch.text or 0)
+                except (TypeError, ValueError):
+                    pass
+            elif lt == "Cadence":
+                try:
+                    c = float(ch.text or 0)
+                    if c > 0:
+                        lap_cadences.append(c)
+                except (TypeError, ValueError):
+                    pass
+
+    cadence = None
+    if lap_cadences:
+        cadence = sum(lap_cadences) / len(lap_cadences)
+    else:
+        tp_cads: list[float] = []
+        for el in root.iter():
+            if _local(el.tag) == "Trackpoint":
+                for ch in list(el):
+                    if _local(ch.tag) == "Cadence":
+                        try:
+                            c = float(ch.text or 0)
+                            if c > 0:
+                                tp_cads.append(c)
+                        except (TypeError, ValueError):
+                            pass
+        if tp_cads:
+            cadence = sum(tp_cads) / len(tp_cads)
+    if cadence is not None:
+        cadence = round(cadence * 2) if cadence < 120 else round(cadence)
+
+    alts: list[float] = []
+    for el in root.iter():
+        if _local(el.tag) == "AltitudeMeters":
+            try:
+                alts.append(float(el.text))
+            except (TypeError, ValueError):
+                pass
+    elevation_gain = None
+    if len(alts) > 1:
+        gain = sum(max(0.0, alts[i] - alts[i - 1])
+                   for i in range(1, len(alts))
+                   if alts[i] - alts[i - 1] > 0.5)
+        elevation_gain = round(gain) or None
+
+    return {
+        "cadence": cadence,
+        "calories": round(calories) or None,
+        "elevationGain": elevation_gain,
+    }
+
 # ---------------------------------------------------------------------------
 # Sync logic
 # ---------------------------------------------------------------------------
@@ -291,8 +369,27 @@ async def pull_polar_exercises() -> dict:
                 log.warning("Polar exercise fetch failed: %s %s", er.status_code, url)
                 continue
             run = map_polar_to_run(er.json())
-            if run:
-                new_runs.append(run)
+            if not run:
+                continue
+            # Cadence + elevation are not in the summary JSON — enrich from TCX export
+            try:
+                tr = await client.get(
+                    url + "/tcx",
+                    headers={
+                        "Authorization": f"Bearer {access_token}",
+                        "Accept": "application/vnd.garmin.tcx+xml",
+                    },
+                )
+                if tr.status_code == 200:
+                    metrics = parse_tcx_metrics(tr.content)
+                    for k in ("cadence", "calories", "elevationGain"):
+                        if metrics.get(k) is not None and run.get(k) is None:
+                            run[k] = metrics[k]
+                else:
+                    log.info("Polar TCX enrich skipped: %s %s", tr.status_code, url)
+            except Exception as e:
+                log.warning("Polar TCX enrich failed for %s: %s", url, e)
+            new_runs.append(run)
 
     # 4. Merge with existing, dedup by id/polarId, skip deleted
     existing = load_runs()
