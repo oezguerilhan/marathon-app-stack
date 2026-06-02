@@ -2257,12 +2257,20 @@ function init() {
           if (merged) { updatedRuns.push(ex); updated++; } else skipped++;
           continue;
         }
-        // Date-based fallback: match Polar-synced runs by date (different ID format)
-        const byDate = state.runs.find(r => r.date === run.date && EXTRA.every(f => r[f] == null));
+        // Date-based fallback: same activity from Polar API sync (different ID format).
+        // Match by date + km proximity — both derive from the same Polar recording.
+        // (Don't require all EXTRA fields null: API sync already fills calories from
+        //  the summary JSON, so a stricter check would miss the match → duplicate.)
+        const byDate = state.runs.find(r =>
+          r.id !== run.id &&
+          r.date === run.date &&
+          r.km != null && run.km != null &&
+          Math.abs(r.km - run.km) < 0.2
+        );
         if (byDate) {
-          EXTRA.forEach(f => { if (run[f] != null) byDate[f] = run[f]; });
-          updatedRuns.push(byDate);
-          updated++;
+          let merged = false;
+          EXTRA.forEach(f => { if (run[f] != null && byDate[f] == null) { byDate[f] = run[f]; merged = true; } });
+          if (merged) { updatedRuns.push(byDate); updated++; } else skipped++;
           continue;
         }
         state.runs.push(run);
