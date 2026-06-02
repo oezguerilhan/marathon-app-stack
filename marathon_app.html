@@ -1295,21 +1295,36 @@ function updatePolarSyncDisplay() {
 // GENERATOR
 // ============================================================
 
-function getPauseDays(runs) {
-  const runTypes = ['Locker', 'LongRun', 'Tempo', 'Walking', 'Rudern'];
-  const lastDate = (runs || [])
-    .filter(r => r.date && runTypes.includes(r.type))
-    .map(r => r.date).sort().pop();
-  if (!lastDate) return null;
-  const today = isoDate(new Date());
-  return Math.max(0, Math.floor((new Date(today) - new Date(lastDate)) / 86400000));
+function mondayOf(iso) {
+  const d = new Date(iso);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day; // Snap auf Montag
+  d.setDate(d.getDate() + diff);
+  return isoDate(d);
 }
 
-function getComebackFactor(pauseDays) {
-  if (!pauseDays || pauseDays < 10) return 1.0;
-  if (pauseDays < 14) return 0.75;
-  if (pauseDays < 21) return 0.65;
-  return 0.55;
+// Comeback-Rampe: erkennt Wiedereinstieg (erster Lauf nach Lücke ≥ 10 Tagen)
+// und rampt das Volumen über 4 Wochen hoch (55/70/85/100%). Anker-basiert,
+// resettet NICHT bei jedem Lauf. Kein Tempo in den ersten 2 Wochen (AS-Schutz).
+const COMEBACK_RAMP = [0.55, 0.70, 0.85]; // Woche 1/2/3; ab Woche 4 = 100%
+function getComebackInfo(runs, weekStart) {
+  const runTypes = ['Locker', 'LongRun', 'Tempo', 'Walking', 'Rudern'];
+  const dates = [...new Set((runs || [])
+    .filter(r => r.date && runTypes.includes(r.type))
+    .map(r => r.date))].sort();
+  if (dates.length < 2) return null;
+  // Jüngsten Wiedereinstiegs-Anker finden: Lauf mit ≥ 10 Tagen Lücke davor
+  let anchor = null;
+  for (let i = 1; i < dates.length; i++) {
+    const gap = Math.floor((new Date(dates[i]) - new Date(dates[i-1])) / 86400000);
+    if (gap >= 10) anchor = dates[i];
+  }
+  if (!anchor) return null;
+  // Wochen-Index relativ zur Montagswoche des Ankers (Montag-ausgerichtet)
+  const anchorMon = mondayOf(anchor);
+  const weekIndex = Math.round((new Date(weekStart) - new Date(anchorMon)) / (7 * 86400000));
+  if (weekIndex < 0 || weekIndex >= COMEBACK_RAMP.length) return null;
+  return { anchor, weekIndex, factor: COMEBACK_RAMP[weekIndex] };
 }
 
 function getLastWeekKm(runs) {
@@ -1394,14 +1409,15 @@ function generateWeek(s) {
   const tempoKm  = TEMPO_KM[s.phase];
   const lockerKm = LOCKER_KM[s.phase];
 
-  // Comeback-Berechnung
-  const pauseDays      = getPauseDays(s.runs);
-  const comebackFactor = getComebackFactor(pauseDays);
-  const isComeback     = comebackFactor < 1.0;
+  // Comeback-Rampe (4 Wochen, anker-basiert)
+  const cbInfo         = getComebackInfo(s.runs, s.weekStart);
+  const isComeback     = !!cbInfo;
+  const comebackFactor = cbInfo ? cbInfo.factor : 1.0;
+  const noTempoWeek    = isComeback && cbInfo.weekIndex <= 1; // Woche 1+2: kein Tempo
   const effectiveLongKm   = isComeback ? Math.max(3, Math.round(longKm   * comebackFactor)) : longKm;
-  const effectiveTempoKm  = (isComeback && pauseDays >= 21) ? 0 : (isComeback ? Math.max(0, Math.round(tempoKm * comebackFactor)) : tempoKm);
+  const effectiveTempoKm  = noTempoWeek ? 0 : (isComeback ? Math.max(0, Math.round(tempoKm * comebackFactor)) : tempoKm);
   const effectiveLockerKm = isComeback ? Math.max(3, Math.round(lockerKm * comebackFactor)) : lockerKm;
-  const comebackNote   = isComeback ? ` · ⚡ Comeback (${pauseDays}d Pause, ${Math.round(comebackFactor*100)}% Vol.)` : '';
+  const comebackNote   = isComeback ? ` · ⚡ Comeback Woche ${cbInfo.weekIndex + 1}/4 (${Math.round(comebackFactor*100)}% Vol.)` : '';
 
   // Volumen letzte Woche
   const lastWeekKm  = getLastWeekKm(s.runs);
@@ -1507,7 +1523,7 @@ function generateWeek(s) {
     else if (d.activity === 'Locker-Lauf' || d.activity === 'Recovery') d.warmup = 'A';
   }
 
-  return { days, warnings, comeback: { pauseDays, factor: comebackFactor, lastWeekKm, plannedKm, volumeOk } };
+  return { days, warnings, comeback: { active: isComeback, weekIndex: cbInfo ? cbInfo.weekIndex : null, factor: comebackFactor, noTempoWeek, lastWeekKm, plannedKm, volumeOk } };
 }
 
 function applyPaceFeedback(runType, s, baseline) {
@@ -1737,12 +1753,11 @@ function renderWeek() {
   const banners = document.getElementById('week-banners');
   const cb = plan.comeback;
   let bannerHtml = '';
-  if (cb.pauseDays >= 10) {
-    bannerHtml += `<div class="banner banner-warn">⚡ Comeback nach ${cb.pauseDays} Tagen Pause — Volumen auf ${Math.round(cb.factor*100)}% reduziert${cb.pauseDays >= 21 ? ' · Tempo-Einheit entfällt' : ''}</div>`;
-  }
-  if (!cb.volumeOk && cb.plannedKm > 0) {
+  if (cb.active) {
+    bannerHtml += `<div class="banner banner-warn">⚡ Comeback Woche ${cb.weekIndex + 1}/4 — Volumen auf ${Math.round(cb.factor*100)}%${cb.noTempoWeek ? ' · kein Tempo (AS-Schutz)' : ''}</div>`;
+  } else if (!cb.volumeOk && cb.plannedKm > 0) {
     const pct = cb.lastWeekKm > 0 ? ` (${Math.round(cb.lastWeekKm / cb.plannedKm * 100)}% des Ziels)` : '';
-    bannerHtml += `<div class="banner banner-warn">📉 Letzte Woche: ${cb.lastWeekKm} km von ~${cb.plannedKm} km geplant${pct} — Volumen angepasst</div>`;
+    bannerHtml += `<div class="banner banner-warn">📉 Letzte Woche: ${cb.lastWeekKm} km von ~${cb.plannedKm} km geplant${pct}</div>`;
   }
   if (plan.warnings.length > 0) {
     bannerHtml += plan.warnings.map(w => `<div class="banner banner-warn">⚠️ ${w}</div>`).join('');
