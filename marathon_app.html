@@ -228,8 +228,8 @@
     <h2>Grunddaten</h2>
     <div class="row">
       <div class="field">
-        <label>Phase</label>
-        <select id="setup-phase"></select>
+        <label>Phase (automatisch aus Datum)</label>
+        <select id="setup-phase" disabled></select>
       </div>
       <div class="field">
         <label>Wochenstart (Mo)</label>
@@ -645,14 +645,14 @@ const SHIFT_LABELS = {
 const DAY_NAMES = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
 const PHASES = [
-  { id: 0, name: 'Phase 0 — Recovery',         range: '28.04 – 10.05.2026', volumeKm: 5,  longKm: 0,  tempo: false, taper: true },
-  { id: 1, name: 'Phase 1 — Reverse Taper',    range: '11.05 – 31.05.2026', volumeKm: 15, longKm: 6,  tempo: false, taper: false },
-  { id: 2, name: 'Phase 2 — Base Building',    range: 'Jun – Sep 2026',     volumeKm: 23, longKm: 12, tempo: false, taper: false },
-  { id: 3, name: 'Phase 3 — Strength',         range: 'Sep – Dez 2026',     volumeKm: 30, longKm: 16, tempo: true,  taper: false },
-  { id: 4, name: 'Phase 4 — Mid-Test',         range: 'Dez 2026 / Jan 2027',volumeKm: 25, longKm: 15, tempo: true,  taper: false },
-  { id: 5, name: 'Phase 5 — Peak',             range: 'Jan – Feb 2027',     volumeKm: 38, longKm: 19, tempo: true,  taper: false },
-  { id: 6, name: 'Phase 6 — Tune-Up',          range: 'Feb – März 2027',    volumeKm: 30, longKm: 16, tempo: true,  taper: false },
-  { id: 7, name: 'Phase 7 — Taper / Race',     range: '28.03 – 18.04.2027', volumeKm: 18, longKm: 10, tempo: true,  taper: true }
+  { id: 0, name: 'Phase 0 — Recovery',         range: '28.04 – 10.05.2026', start: '2026-04-28', volumeKm: 5,  longKm: 0,  tempo: false, taper: true },
+  { id: 1, name: 'Phase 1 — Reverse Taper',    range: '11.05 – 31.05.2026', start: '2026-05-11', volumeKm: 15, longKm: 6,  tempo: false, taper: false },
+  { id: 2, name: 'Phase 2 — Base Building',    range: 'Jun – Sep 2026',     start: '2026-06-01', volumeKm: 23, longKm: 12, tempo: false, taper: false },
+  { id: 3, name: 'Phase 3 — Strength',         range: 'Sep – Dez 2026',     start: '2026-09-01', volumeKm: 30, longKm: 16, tempo: true,  taper: false },
+  { id: 4, name: 'Phase 4 — Mid-Test',         range: 'Dez 2026 / Jan 2027',start: '2026-12-01', volumeKm: 25, longKm: 15, tempo: true,  taper: false },
+  { id: 5, name: 'Phase 5 — Peak',             range: 'Jan – Feb 2027',     start: '2027-01-15', volumeKm: 38, longKm: 19, tempo: true,  taper: false },
+  { id: 6, name: 'Phase 6 — Tune-Up',          range: 'Feb – März 2027',    start: '2027-02-15', volumeKm: 30, longKm: 16, tempo: true,  taper: false },
+  { id: 7, name: 'Phase 7 — Taper / Race',     range: '28.03 – 18.04.2027', start: '2027-03-28', volumeKm: 18, longKm: 10, tempo: true,  taper: true }
 ];
 
 // Pace baselines in sec/km — aus halbmarathon_2027_roadmap.md
@@ -1327,6 +1327,22 @@ function getComebackInfo(runs, weekStart) {
   return { anchor, weekIndex, factor: COMEBACK_RAMP[weekIndex] };
 }
 
+// Phase aus Datum ableiten: letzte Phase, deren start <= iso (Default 0 davor)
+function phaseForDate(iso) {
+  let id = 0;
+  for (const p of PHASES) {
+    if (p.start && iso >= p.start) id = p.id;
+  }
+  return id;
+}
+
+// Aktive Phase: aus Kalender abgeleitet, während Comeback-Rampe auf Phase 1 gedeckelt
+function getActivePhase(s) {
+  const derived = phaseForDate(s.weekStart);
+  const cb = getComebackInfo(s.runs, s.weekStart);
+  return cb ? Math.min(derived, 1) : derived;
+}
+
 function getLastWeekKm(runs) {
   const lastMon = addDays(state.weekStart, -7);
   const lastSun = addDays(state.weekStart, -1);
@@ -1337,7 +1353,11 @@ function getLastWeekKm(runs) {
 
 function generateWeek(s) {
   const dates = getWeekDates();
-  const phase = PHASES[s.phase];
+  const activePhase    = getActivePhase(s);
+  const phase          = PHASES[activePhase];
+  const cbInfo         = getComebackInfo(s.runs, s.weekStart);
+  const isComeback     = !!cbInfo;
+  const comebackFactor = cbInfo ? cbInfo.factor : 1.0;
   const days = dates.map(d => ({
     date: d,
     dayName: dayName(d),
@@ -1354,17 +1374,17 @@ function generateWeek(s) {
   for (let i = 0; i < 7; i++) {
     const d = days[i];
     const shift = d.shift;
+    const prevShift = i > 0 ? days[i-1].shift : 'frei';
 
-    // FROZEN: Mo immer EASY/REST (Post-Gym)
-    if (i === 0) {
-      d.type = 'EASY';
-      d.activity = 'Recovery';
-      d.advice = 'Spaziergang oder lockerer Lauf 3–4 km · Mobility · Post-Gym-Regeneration';
+    // FROZEN: Nacht-Schicht-Tag → REST (gilt auch für Montag)
+    if (shift === 'Nacht') {
+      d.type = 'REST';
+      d.activity = 'Schicht';
+      d.advice = 'Spaziergang vor Schicht (30 Min). Pre-Schicht-Mahlzeit 18:30.';
       continue;
     }
 
     // FROZEN: Tag direkt nach Nacht → REST
-    const prevShift = i > 0 ? days[i-1].shift : 'frei';
     if (prevShift === 'Nacht') {
       d.type = 'REST';
       d.activity = 'Recovery';
@@ -1372,11 +1392,11 @@ function generateWeek(s) {
       continue;
     }
 
-    // Während Nacht-Schicht-Tag
-    if (shift === 'Nacht') {
-      d.type = 'REST';
-      d.activity = 'Schicht';
-      d.advice = 'Spaziergang vor Schicht (30 Min). Pre-Schicht-Mahlzeit 18:30.';
+    // FROZEN: Mo immer EASY/Recovery (Post-Gym) — sofern keine Nachtschicht
+    if (i === 0) {
+      d.type = 'EASY';
+      d.activity = 'Recovery';
+      d.advice = 'Spaziergang oder lockerer Lauf 3–4 km · Mobility · Post-Gym-Regeneration';
       continue;
     }
 
@@ -1394,25 +1414,22 @@ function generateWeek(s) {
       continue;
     }
 
-    // So → Gym + Rudern (HART, immer)
+    // So → Gym + Rudern (in Taper-/Recovery- und Comeback-Wochen MODERATE statt HART)
     if (d.dayName === 'So') {
-      d.type = 'HART';
+      d.type = (phase.taper || isComeback) ? 'MODERATE' : 'HART';
       d.activity = 'Gym + Rudern';
-      const proto = ROWING_PROTOCOLS[PHASE_PROTOCOL[s.phase]];
+      const proto = ROWING_PROTOCOLS[PHASE_PROTOCOL[activePhase]];
       d.advice = `Gym-Zirkel 30–40 Min + ${proto.name} (${proto.meta})`;
       continue;
     }
   }
 
   // Schritt 2: Lauf-Slots auf restliche Tage verteilen
-  const longKm   = LONG_RUN_KM[s.phase];
-  const tempoKm  = TEMPO_KM[s.phase];
-  const lockerKm = LOCKER_KM[s.phase];
+  const longKm   = LONG_RUN_KM[activePhase];
+  const tempoKm  = TEMPO_KM[activePhase];
+  const lockerKm = LOCKER_KM[activePhase];
 
-  // Comeback-Rampe (4 Wochen, anker-basiert)
-  const cbInfo         = getComebackInfo(s.runs, s.weekStart);
-  const isComeback     = !!cbInfo;
-  const comebackFactor = cbInfo ? cbInfo.factor : 1.0;
+  // Comeback-Rampe (4 Wochen, anker-basiert) — cbInfo/isComeback oben berechnet
   const noTempoWeek    = isComeback && cbInfo.weekIndex <= 1; // Woche 1+2: kein Tempo
   const effectiveLongKm   = isComeback ? Math.max(3, Math.round(longKm   * comebackFactor)) : longKm;
   const effectiveTempoKm  = noTempoWeek ? 0 : (isComeback ? Math.max(0, Math.round(tempoKm * comebackFactor)) : tempoKm);
@@ -1441,7 +1458,7 @@ function generateWeek(s) {
       const d = days[longIdx];
       d.type = isComeback ? 'MODERATE' : 'HART';
       d.activity = 'Long Run';
-      const range = BASELINE_PACES[s.phase].long;
+      const range = BASELINE_PACES[activePhase].long;
       d.advice = `Long Run ${effectiveLongKm} km · ${d.dayName} morgens · Zone 2 ${paceRangeStr(range)}${comebackNote}`;
       d.paceAdvice = applyPaceFeedback('long', s, range);
     }
@@ -1462,7 +1479,7 @@ function generateWeek(s) {
       const d = days[tempoIdx];
       d.type = 'HART';
       d.activity = 'Tempo / Fartlek';
-      const range = BASELINE_PACES[s.phase].tempo;
+      const range = BASELINE_PACES[activePhase].tempo;
       d.advice = `Tempo ${effectiveTempoKm} km · ${d.dayName} abends · 4–6× 60–90 s Bursts ${range ? paceRangeStr(range) : '5:30–6:00/km'} · vollst. Pause${comebackNote}`;
       d.paceAdvice = applyPaceFeedback('tempo', s, range);
     }
@@ -1482,7 +1499,7 @@ function generateWeek(s) {
     const d = days[lockerIdx];
     d.type = 'EASY';
     d.activity = 'Locker-Lauf';
-    const range = BASELINE_PACES[s.phase].locker;
+    const range = BASELINE_PACES[activePhase].locker;
     const fb = applyPaceFeedback('locker', s, range);
     d.advice = `Locker ${effectiveLockerKm} km · Zone 2 · ${paceRangeStr(range)}${comebackNote}`;
     d.paceAdvice = fb;
@@ -1704,14 +1721,15 @@ function drawBarChart(canvas, bars, options) {
 // ============================================================
 
 function renderHeader() {
-  const ph = PHASES[state.phase];
+  const ph = PHASES[getActivePhase(state)];
   document.getElementById('header-info').innerHTML =
     `<strong>${ph.name}</strong> · Woche ab <strong>${formatDateShort(state.weekStart)}</strong>${new Date(state.weekStart).getFullYear()}`;
 }
 
 function renderSetup() {
+  const activePhase = getActivePhase(state);
   const sel = document.getElementById('setup-phase');
-  sel.innerHTML = PHASES.map(p => `<option value="${p.id}" ${p.id === state.phase ? 'selected' : ''}>${p.name}</option>`).join('');
+  sel.innerHTML = PHASES.map(p => `<option value="${p.id}" ${p.id === activePhase ? 'selected' : ''}>${p.name}</option>`).join('');
   document.getElementById('setup-week-start').value = state.weekStart;
   document.getElementById('setup-hfmax').value = state.user.hfMax;
   document.getElementById('setup-weight').value = state.user.weight;
@@ -1720,7 +1738,7 @@ function renderSetup() {
   tbody.innerHTML = PHASES.map(p => {
     const long = LONG_RUN_KM[p.id] || 0;
     const tempo = TEMPO_KM[p.id] || 0;
-    return `<tr ${p.id === state.phase ? 'style="background:var(--blue-l);"' : ''}>
+    return `<tr ${p.id === activePhase ? 'style="background:var(--blue-l);"' : ''}>
       <td><strong>${p.name}</strong></td>
       <td>${p.range}</td>
       <td>~${p.volumeKm} km/Wo</td>
@@ -1962,9 +1980,10 @@ function renderMealprep() {
 }
 
 function renderRowing() {
-  const proto = ROWING_PROTOCOLS[PHASE_PROTOCOL[state.phase]];
+  const activePhase = getActivePhase(state);
+  const proto = ROWING_PROTOCOLS[PHASE_PROTOCOL[activePhase]];
   document.getElementById('rowing-protocol-title').textContent = proto.name;
-  document.getElementById('rowing-protocol-meta').textContent = proto.meta + ' · Aktive Phase: ' + PHASES[state.phase].name;
+  document.getElementById('rowing-protocol-meta').textContent = proto.meta + ' · Aktive Phase: ' + PHASES[activePhase].name;
   document.getElementById('rowing-blocks').innerHTML = proto.blocks.map(b =>
     `<tr class="${b.cls}"><td><strong>${b.name}</strong></td><td>${b.dur}</td><td>${b.intensity}</td><td>${b.hr}</td></tr>`
   ).join('');
@@ -2125,7 +2144,7 @@ function init() {
 
   // Setup save
   document.getElementById('setup-save').addEventListener('click', () => {
-    state.phase = parseInt(document.getElementById('setup-phase').value);
+    // Phase wird automatisch aus dem Datum abgeleitet (getActivePhase) — kein manuelles Setzen mehr
     state.weekStart = document.getElementById('setup-week-start').value;
     state.user.hfMax = parseInt(document.getElementById('setup-hfmax').value) || 182;
     state.user.weight = parseFloat(document.getElementById('setup-weight').value) || 83;
